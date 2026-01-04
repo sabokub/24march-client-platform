@@ -239,7 +239,12 @@ if (!list || ownerId !== user.id) {
     .eq('id', listId)
     .single()
 
-  const projectData = list?.project as { owner_id: string } | null
+  const projectData = (
+  Array.isArray(list?.project)
+    ? list?.project?.[0] ?? null
+    : list?.project ?? null
+) as { owner_id: string } | null
+  
   if (!list || projectData?.owner_id !== user.id) {
     return { error: 'Non autorisé' }
   }

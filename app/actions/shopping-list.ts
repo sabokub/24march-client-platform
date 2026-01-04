@@ -224,11 +224,14 @@ export async function sendShoppingList(listId: string) {
 export async function validateShoppingList(listId: string) {
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { error: 'Non autorisé' }
-  }
+  type ProjectRef = { owner_id: string } | { owner_id: string }[] | null | undefined
 
+const projectRef = (list?.project as ProjectRef) ?? null
+const ownerId = Array.isArray(projectRef) ? projectRef?.[0]?.owner_id : projectRef?.owner_id
+
+if (!list || ownerId !== user.id) {
+  return { error: 'Non autorisé' }
+}
   // Get list and check project ownership
   const { data: list } = await supabase
     .from('shopping_lists')

@@ -72,7 +72,9 @@ export default async function AdminDashboardPage({
             </div>
             <div>
               <span className="text-xl font-bold text-gray-900">24March Studio</span>
-              <Badge className="ml-2 bg-purple-100 text-purple-800">Admin</Badge>
+              <Badge variant="secondary" className="ml-2 bg-purple-100 text-purple-800">
+                Admin
+              </Badge>
             </div>
           </Link>
           <div className="flex items-center gap-4">
@@ -179,7 +181,10 @@ export default async function AdminDashboardPage({
                             {project.room_type || '-'}
                           </td>
                           <td className="py-3 px-4">
-                            <Badge className={getStatusColor(project.status)}>
+                            <Badge
+                              variant="secondary"
+                              className={getStatusColor(project.status)}
+                            >
                               {getStatusLabel(project.status)}
                             </Badge>
                           </td>

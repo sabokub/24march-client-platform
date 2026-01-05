@@ -41,3 +41,12 @@ export function getStatusColor(status: string): string {
   }
   return colors[status] || 'bg-gray-100 text-gray-800'
 }
+
+export function formatPrice(value?: number | null) {
+  if (value === null || value === undefined || Number.isNaN(value)) return "—"
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 2,
+  }).format(value)
+}

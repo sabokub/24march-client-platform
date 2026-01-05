@@ -21,7 +21,13 @@ export default function LoginPage() {
           <CardDescription>Connectez-vous à votre espace client</CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={async (formData) => { await signIn(formData) }} className="space-y-4">
+          <form
+            action={async (formData) => {
+              await signIn(formData)
+              return
+            }}
+            className="space-y-4"
+          >
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input

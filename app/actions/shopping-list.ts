@@ -10,11 +10,8 @@ export async function createShoppingList(projectId: string) {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { error: 'Non autorisé' }
-  }
+  if (!user) return { error: 'Non autorisé' }
 
-  // Check admin
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
@@ -25,7 +22,6 @@ export async function createShoppingList(projectId: string) {
     return { error: 'Réservé aux administrateurs' }
   }
 
-  // Get current max version
   const { data: existing } = await supabase
     .from('shopping_lists')
     .select('version')
@@ -45,9 +41,7 @@ export async function createShoppingList(projectId: string) {
     status: 'draft',
   })
 
-  if (error) {
-    return { error: error.message }
-  }
+  if (error) return { error: error.message }
 
   await logAudit('shopping_list.create', user.id, projectId, { listId, version: newVersion })
 
@@ -59,11 +53,8 @@ export async function addShoppingListItem(formData: FormData) {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { error: 'Non autorisé' }
-  }
+  if (!user) return { error: 'Non autorisé' }
 
-  // Check admin
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
@@ -75,10 +66,13 @@ export async function addShoppingListItem(formData: FormData) {
   }
 
   const listId = formData.get('list_id') as string
+
   const rawData = {
     title: formData.get('title') as string,
     retailer: formData.get('retailer') as string || undefined,
-    price_eur: formData.get('price_eur') ? parseFloat(formData.get('price_eur') as string) : undefined,
+    price_eur: formData.get('price_eur')
+      ? parseFloat(formData.get('price_eur') as string)
+      : undefined,
     product_url: formData.get('product_url') as string || undefined,
     affiliate_url: formData.get('affiliate_url') as string || undefined,
     image_url: formData.get('image_url') as string || undefined,
@@ -100,11 +94,8 @@ export async function addShoppingListItem(formData: FormData) {
     ...result.data,
   })
 
-  if (error) {
-    return { error: error.message }
-  }
+  if (error) return { error: error.message }
 
-  // Get project ID for audit
   const { data: list } = await supabase
     .from('shopping_lists')
     .select('project_id')
@@ -112,32 +103,35 @@ export async function addShoppingListItem(formData: FormData) {
     .single()
 
   if (list) {
-    await logAudit('shopping_list.update', user.id, list.project_id, { action: 'add_item', itemId })
+    await logAudit('shopping_list.update', user.id, list.project_id, {
+      action: 'add_item',
+      itemId,
+    })
     revalidatePath(`/admin/projects/${list.project_id}`)
   }
 
   return { success: true, itemId }
 }
 
-export async function updateShoppingListItem(itemId: string, data: Partial<{
-  title: string
-  retailer: string
-  price_eur: number
-  product_url: string
-  affiliate_url: string
-  image_url: string
-  category: string
-  notes: string
-  position: number
-}>) {
+export async function updateShoppingListItem(
+  itemId: string,
+  data: Partial<{
+    title: string
+    retailer: string
+    price_eur: number
+    product_url: string
+    affiliate_url: string
+    image_url: string
+    category: string
+    notes: string
+    position: number
+  }>
+) {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { error: 'Non autorisé' }
-  }
+  if (!user) return { error: 'Non autorisé' }
 
-  // Check admin
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
@@ -153,9 +147,7 @@ export async function updateShoppingListItem(itemId: string, data: Partial<{
     .update(data)
     .eq('id', itemId)
 
-  if (error) {
-    return { error: error.message }
-  }
+  if (error) return { error: error.message }
 
   return { success: true }
 }
@@ -164,11 +156,8 @@ export async function deleteShoppingListItem(itemId: string) {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { error: 'Non autorisé' }
-  }
+  if (!user) return { error: 'Non autorisé' }
 
-  // Check admin
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
@@ -188,11 +177,8 @@ export async function sendShoppingList(listId: string) {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { error: 'Non autorisé' }
-  }
+  if (!user) return { error: 'Non autorisé' }
 
-  // Check admin
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
@@ -210,35 +196,25 @@ export async function sendShoppingList(listId: string) {
     .select('project_id')
     .single()
 
-  if (error) {
-    return { error: error.message }
-  }
+  if (error || !list) return { error: error?.message ?? 'Erreur' }
 
-  await logAudit('shopping_list.update', user.id, list.project_id, { action: 'send', listId })
+  await logAudit('shopping_list.update', user.id, list.project_id, {
+    action: 'send',
+    listId,
+  })
 
   revalidatePath(`/admin/projects/${list.project_id}`)
   revalidatePath(`/dashboard/projects/${list.project_id}`)
+
   return { success: true }
 }
 
 export async function validateShoppingList(listId: string) {
   const supabase = await createClient()
 
-  type ProjectRef = { owner_id: string } | { owner_id: string }[] | null | undefined
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autorisé' }
 
-const projectRef = (
-  Array.isArray(list.project)
-    ? list.project[0] ?? null
-    : list.project ?? null
-) as { owner_id: string } | null
-
-const ownerId = projectRef?.owner_id
-
-if (ownerId !== user.id) {
-  throw new Error("Non autorisé")
-}
-
-  // Get list and check project ownership
   const { data: list } = await supabase
     .from('shopping_lists')
     .select('project_id, project:projects(owner_id)')
@@ -246,11 +222,11 @@ if (ownerId !== user.id) {
     .single()
 
   const projectData = (
-  Array.isArray(list?.project)
-    ? list?.project?.[0] ?? null
-    : list?.project ?? null
-) as { owner_id: string } | null
-  
+    Array.isArray(list?.project)
+      ? list?.project?.[0] ?? null
+      : list?.project ?? null
+  ) as { owner_id: string } | null
+
   if (!list || projectData?.owner_id !== user.id) {
     return { error: 'Non autorisé' }
   }
@@ -260,9 +236,7 @@ if (ownerId !== user.id) {
     .update({ status: 'validated' })
     .eq('id', listId)
 
-  if (error) {
-    return { error: error.message }
-  }
+  if (error) return { error: error.message }
 
   await logAudit('shopping_list.validate', user.id, list.project_id, { listId })
 
@@ -274,37 +248,43 @@ export async function requestAdjustment(listId: string, notes: string) {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { error: 'Non autorisé' }
-  }
+  if (!user) return { error: 'Non autorisé' }
 
-  // Get list and check project ownership
   const { data: list } = await supabase
     .from('shopping_lists')
     .select('project_id, project:projects(owner_id)')
     .eq('id', listId)
     .single()
 
-  const projectData = list?.project as { owner_id: string } | null
+  const projectData = (
+    Array.isArray(list?.project)
+      ? list?.project?.[0] ?? null
+      : list?.project ?? null
+  ) as { owner_id: string } | null
+
   if (!list || projectData?.owner_id !== user.id) {
     return { error: 'Non autorisé' }
   }
 
   const { error } = await supabase
     .from('shopping_lists')
-    .update({ 
+    .update({
       status: 'adjustment_requested',
-      client_notes: notes 
+      client_notes: notes,
     })
     .eq('id', listId)
 
-  if (error) {
-    return { error: error.message }
-  }
+  if (error) return { error: error.message }
 
-  await logAudit('shopping_list.request_adjustment', user.id, list.project_id, { listId, notes })
+  await logAudit(
+    'shopping_list.request_adjustment',
+    user.id,
+    list.project_id,
+    { listId, notes }
+  )
 
   revalidatePath(`/dashboard/projects/${list.project_id}`)
   revalidatePath(`/admin/projects/${list.project_id}`)
+
   return { success: true }
 }

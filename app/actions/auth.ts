@@ -6,19 +6,22 @@ import { redirect } from 'next/navigation'
 import { signUpSchema, signInSchema, resetPasswordSchema } from '@/lib/validations'
 import { logAudit } from '@/lib/audit'
 
-export async function signUp(formData: FormData) {
+/**
+ * SIGN UP
+ */
+export async function signUp(formData: FormData): Promise<void> {
   const supabase = await createClient()
 
   const rawData = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
     name: formData.get('name') as string,
-    phone: formData.get('phone') as string || undefined,
+    phone: (formData.get('phone') as string) || undefined,
   }
 
   const result = signUpSchema.safeParse(rawData)
   if (!result.success) {
-    return { error: result.error.errors[0].message }
+    throw new Error(result.error.errors[0].message)
   }
 
   const { email, password, name, phone } = result.data
@@ -27,25 +30,21 @@ export async function signUp(formData: FormData) {
     email,
     password,
     options: {
-      data: {
-        name,
-        phone,
-      },
+      data: { name, phone },
     },
   })
 
   if (error) {
-    return { error: error.message }
+    throw new Error(error.message)
   }
 
-  // Create profile
   if (data.user) {
     await supabase.from('profiles').insert({
       id: data.user.id,
       email,
       name,
       phone,
-      role: 'client', // Default role
+      role: 'client',
     })
   }
 
@@ -53,7 +52,10 @@ export async function signUp(formData: FormData) {
   redirect('/dashboard')
 }
 
-export async function signIn(formData: FormData) {
+/**
+ * SIGN IN
+ */
+export async function signIn(formData: FormData): Promise<void> {
   const supabase = await createClient()
 
   const rawData = {
@@ -63,7 +65,7 @@ export async function signIn(formData: FormData) {
 
   const result = signInSchema.safeParse(rawData)
   if (!result.success) {
-    return { error: result.error.errors[0].message }
+    throw new Error(result.error.errors[0].message)
   }
 
   const { email, password } = result.data
@@ -74,7 +76,7 @@ export async function signIn(formData: FormData) {
   })
 
   if (error) {
-    return { error: error.message }
+    throw new Error(error.message)
   }
 
   if (data.user) {
@@ -85,10 +87,16 @@ export async function signIn(formData: FormData) {
   redirect('/dashboard')
 }
 
-export async function signOut() {
+/**
+ * SIGN OUT
+ */
+export async function signOut(): Promise<void> {
   const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
   if (user) {
     await logAudit('auth.logout', user.id)
   }
@@ -98,7 +106,10 @@ export async function signOut() {
   redirect('/')
 }
 
-export async function resetPassword(formData: FormData) {
+/**
+ * RESET PASSWORD (email)
+ */
+export async function resetPassword(formData: FormData): Promise<void> {
   const supabase = await createClient()
 
   const rawData = {
@@ -107,7 +118,7 @@ export async function resetPassword(formData: FormData) {
 
   const result = resetPasswordSchema.safeParse(rawData)
   if (!result.success) {
-    return { error: result.error.errors[0].message }
+    throw new Error(result.error.errors[0].message)
   }
 
   const { email } = result.data
@@ -117,27 +128,26 @@ export async function resetPassword(formData: FormData) {
   })
 
   if (error) {
-    return { error: error.message }
+    throw new Error(error.message)
   }
-
-  return { success: 'Email de réinitialisation envoyé' }
 }
 
-export async function updatePassword(formData: FormData) {
+/**
+ * UPDATE PASSWORD
+ */
+export async function updatePassword(formData: FormData): Promise<void> {
   const supabase = await createClient()
 
   const password = formData.get('password') as string
 
   if (!password || password.length < 8) {
-    return { error: 'Le mot de passe doit contenir au moins 8 caractères' }
+    throw new Error('Le mot de passe doit contenir au moins 8 caractères')
   }
 
-  const { error } = await supabase.auth.updateUser({
-    password,
-  })
+  const { error } = await supabase.auth.updateUser({ password })
 
   if (error) {
-    return { error: error.message }
+    throw new Error(error.message)
   }
 
   revalidatePath('/', 'layout')

@@ -99,7 +99,9 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
             {project.style_tags && project.style_tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-3">
                 {project.style_tags.map((tag: string) => (
-                  <Badge key={tag} variant="secondary">{tag}</Badge>
+                  <Badge key={tag} variant="secondary" className="">
+                    {tag}
+                  </Badge>
                 ))}
               </div>
             )}

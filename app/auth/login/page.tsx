@@ -6,6 +6,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Home } from 'lucide-react'
 
+async function onSignIn(formData: FormData): Promise<void> {
+  await signIn(formData)
+}
+
 export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-white flex items-center justify-center p-4">
@@ -20,14 +24,9 @@ export default function LoginPage() {
           <CardTitle>Connexion</CardTitle>
           <CardDescription>Connectez-vous à votre espace client</CardDescription>
         </CardHeader>
+
         <CardContent>
-          <form
-            action={async (formData) => {
-              await signIn(formData)
-              return
-            }}
-            className="space-y-4"
-          >
+          <form action={onSignIn} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -38,10 +37,14 @@ export default function LoginPage() {
                 required
               />
             </div>
+
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Mot de passe</Label>
-                <Link href="/auth/reset-password" className="text-sm text-amber-600 hover:underline">
+                <Link
+                  href="/auth/reset-password"
+                  className="text-sm text-amber-600 hover:underline"
+                >
                   Mot de passe oublié ?
                 </Link>
               </div>
@@ -53,10 +56,15 @@ export default function LoginPage() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700">
+
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+            >
               Se connecter
             </Button>
           </form>
+
           <p className="mt-6 text-center text-sm text-gray-600">
             Pas encore de compte ?{' '}
             <Link href="/auth/signup" className="text-amber-600 hover:underline font-medium">

@@ -1,12 +1,34 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { signIn } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Home } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function LoginPage() {
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setIsLoading(true)
+    
+    const formData = new FormData(e.currentTarget)
+    const result = await signIn(formData)
+    
+    if (result?.error) {
+      toast.error(result.error)
+      setIsLoading(false)
+    }
+    // If no error, signIn redirects, so no need to handle success
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-white flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
@@ -21,7 +43,7 @@ export default function LoginPage() {
           <CardDescription>Connectez-vous à votre espace client</CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={signIn} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -30,6 +52,7 @@ export default function LoginPage() {
                 type="email"
                 placeholder="votre@email.com"
                 required
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -45,10 +68,15 @@ export default function LoginPage() {
                 type="password"
                 placeholder="••••••••"
                 required
+                disabled={isLoading}
               />
             </div>
-            <Button type="submit" className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700">
-              Se connecter
+            <Button 
+              type="submit" 
+              className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Connexion...' : 'Se connecter'}
             </Button>
           </form>
           <p className="mt-6 text-center text-sm text-gray-600">

@@ -92,7 +92,7 @@ export function AdminDeliverableUploader({ projectId, deliverables }: AdminDeliv
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
             <Label>Type de livrable</Label>
-            <Select value={deliverableType} onValueChange={(v) => setDeliverableType(v as DeliverableType)}>
+            <Select value={deliverableType} onValueChange={(v: string) => setDeliverableType(v as DeliverableType)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

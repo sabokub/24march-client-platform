@@ -236,7 +236,7 @@ export async function validateShoppingList(listId: string) {
     .eq('id', listId)
     .single()
 
-  const projectData = list?.project as { owner_id: string } | null
+  const projectData = list?.project as unknown as { owner_id: string } | null
   if (!list || projectData?.owner_id !== user.id) {
     return { error: 'Non autorisé' }
   }
@@ -271,7 +271,7 @@ export async function requestAdjustment(listId: string, notes: string) {
     .eq('id', listId)
     .single()
 
-  const projectData = list?.project as { owner_id: string } | null
+  const projectData = list?.project as unknown as { owner_id: string } | null
   if (!list || projectData?.owner_id !== user.id) {
     return { error: 'Non autorisé' }
   }

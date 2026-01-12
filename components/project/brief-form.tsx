@@ -205,7 +205,7 @@ export function ProjectBriefForm({ projectId, initialData, projectStatus }: Proj
                   <Checkbox
                     id={`${q.id}-${option}`}
                     checked={(answers[q.id] || []).includes(option)}
-                    onCheckedChange={(checked) => 
+                    onCheckedChange={(checked: boolean | 'indeterminate') => 
                       handleCheckboxChange(q.id, option, checked as boolean)
                     }
                     disabled={isSubmitted}

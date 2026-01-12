@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
 import { signUp } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
@@ -5,8 +8,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Home } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function SignUpPage() {
+  const [isLoading, setIsLoading] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setIsLoading(true)
+    
+    const formData = new FormData(e.currentTarget)
+    const result = await signUp(formData)
+    
+    if (result?.error) {
+      toast.error(result.error)
+      setIsLoading(false)
+    }
+    // If no error, signUp redirects
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-white flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
@@ -21,7 +41,7 @@ export default function SignUpPage() {
           <CardDescription>Commencez votre projet de décoration</CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={signUp} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nom complet</Label>
               <Input
@@ -30,6 +50,7 @@ export default function SignUpPage() {
                 type="text"
                 placeholder="Jean Dupont"
                 required
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -40,6 +61,7 @@ export default function SignUpPage() {
                 type="email"
                 placeholder="votre@email.com"
                 required
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -49,6 +71,7 @@ export default function SignUpPage() {
                 name="phone"
                 type="tel"
                 placeholder="06 12 34 56 78"
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -59,10 +82,15 @@ export default function SignUpPage() {
                 type="password"
                 placeholder="8 caractères minimum"
                 required
+                disabled={isLoading}
               />
             </div>
-            <Button type="submit" className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700">
-              Créer mon compte
+            <Button 
+              type="submit" 
+              className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Création...' : 'Créer mon compte'}
             </Button>
           </form>
           <p className="mt-6 text-center text-sm text-gray-600">

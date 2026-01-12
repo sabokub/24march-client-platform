@@ -14,19 +14,18 @@ export default function UpdatePasswordPage() {
   const [isLoading, setIsLoading] = useState(false)
 
   async function handleSubmit(formData: FormData): Promise<void> {
-    setIsLoading(true)
-    try {
-      await updatePassword(formData)
-      toast.success('Mot de passe mis à jour')
-      // updatePassword() redirect déjà vers /dashboard, donc ce toast peut ne pas s'afficher longtemps.
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erreur inconnue'
-      toast.error(message)
-    } finally {
-      setIsLoading(false)
-    }
+  setIsLoading(true)
+  try {
+    await updatePassword(formData)
+    toast.success('Mot de passe mis à jour')
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Erreur inconnue'
+    toast.error(message)
+  } finally {
+    setIsLoading(false)
   }
-
+}
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-white flex items-center justify-center p-4">
       <Card className="w-full max-w-md">

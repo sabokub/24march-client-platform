@@ -15,6 +15,8 @@ import { MessageList } from '@/components/project/message-list'
 import { AssetViewer } from '@/components/admin/asset-viewer'
 import { BriefViewer } from '@/components/admin/brief-viewer'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminProjectDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createClient()
   

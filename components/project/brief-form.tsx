@@ -184,7 +184,7 @@ export function ProjectBriefForm({ projectId, initialData, projectStatus }: Proj
           {q.type === 'radio' && (
             <RadioGroup
               value={answers[q.id] || ''}
-              onValueChange={(value) => handleChange(q.id, value)}
+              onValueChange={(value: string) => handleChange(q.id, value)}
               disabled={isSubmitted}
             >
               {q.options?.map((option) => (

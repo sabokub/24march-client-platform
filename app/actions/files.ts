@@ -288,7 +288,7 @@ export async function getDeliverableUrl(deliverableId: string) {
     .eq('id', user.id)
     .single()
 
-  const projectData = deliverable.project as { owner_id: string } | null
+  const projectData = deliverable.project as unknown as { owner_id: string } | null
   if (profile?.role !== 'admin' && projectData?.owner_id !== user.id) {
     return { error: 'Non autorisé' }
   }

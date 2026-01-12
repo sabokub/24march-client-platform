@@ -14,6 +14,8 @@ import { MessageList } from '@/components/project/message-list'
 import { ShoppingListView } from '@/components/project/shopping-list-view'
 import { DeliverablesList } from '@/components/project/deliverables-list'
 
+export const dynamic = 'force-dynamic'
+
 export default async function ProjectDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createClient()
   

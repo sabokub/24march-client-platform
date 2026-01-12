@@ -13,13 +13,18 @@ import { toast } from 'sonner'
 export default function UpdatePasswordPage() {
   const [isLoading, setIsLoading] = useState(false)
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit(formData: FormData): Promise<void> {
     setIsLoading(true)
-    const result = await updatePassword(formData)
-    if (result?.error) {
-      toast.error(result.error)
+    try {
+      await updatePassword(formData)
+      toast.success('Mot de passe mis à jour')
+      // updatePassword() redirect déjà vers /dashboard, donc ce toast peut ne pas s'afficher longtemps.
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erreur inconnue'
+      toast.error(message)
+    } finally {
+      setIsLoading(false)
     }
-    setIsLoading(false)
   }
 
   return (
@@ -47,8 +52,8 @@ export default function UpdatePasswordPage() {
                 required
               />
             </div>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
               disabled={isLoading}
             >

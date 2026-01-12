@@ -83,7 +83,7 @@ export function AssetUploader({ projectId, assets }: AssetUploaderProps) {
           </div>
           
           <div className="flex items-center gap-4">
-            <Select value={assetType} onValueChange={(v) => setAssetType(v as AssetType)}>
+            <Select value={assetType} onValueChange={(v: string) => setAssetType(v as AssetType)}>
               <SelectTrigger className="w-40">
                 <SelectValue />
               </SelectTrigger>

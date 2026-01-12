@@ -13,8 +13,10 @@ import { toast } from 'sonner'
 export default function UpdatePasswordPage() {
   const [isLoading, setIsLoading] = useState(false)
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
     setIsLoading(true)
+    const formData = new FormData(e.currentTarget)
     const result = await updatePassword(formData)
     if (result?.error) {
       toast.error(result.error)
@@ -36,7 +38,7 @@ export default function UpdatePasswordPage() {
           <CardDescription>Choisissez votre nouveau mot de passe</CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="password">Nouveau mot de passe</Label>
               <Input

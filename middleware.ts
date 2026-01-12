@@ -1,37 +1,37 @@
-import { type NextRequest, NextResponse } from 'next/server'
-import { updateSession } from '@/lib/supabase/middleware'
+import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
-  // Check if Supabase is configured
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  
-  if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('your_') || supabaseKey.includes('your_')) {
-    // Supabase not configured - allow access to public routes only
-    const isPublicRoute = request.nextUrl.pathname === '/' || 
-                          request.nextUrl.pathname.startsWith('/auth') ||
-                          request.nextUrl.pathname.startsWith('/setup')
-    
-    if (!isPublicRoute) {
-      // Redirect to setup page or home
-      const url = request.nextUrl.clone()
-      url.pathname = '/'
-      return NextResponse.redirect(url)
-    }
-    return NextResponse.next()
+/**
+ * Edge middleware: keep it dependency-free (no Supabase JS) to avoid Edge runtime warnings.
+ * Auth + role checks are enforced in server layouts/pages.
+ */
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  const isPublicRoute =
+    pathname === '/' ||
+    pathname.startsWith('/auth') ||
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/favicon') ||
+    pathname.startsWith('/assets')
+
+  if (isPublicRoute) return NextResponse.next()
+
+  // If you want, you can keep a minimal gate based on presence of auth cookies,
+  // without verifying them here. This avoids calling Supabase in Edge.
+  const hasSbCookie =
+    request.cookies.getAll().some((c) => c.name.startsWith('sb-')) ||
+    request.cookies.getAll().some((c) => c.name.includes('supabase'))
+
+  if (!hasSbCookie) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/auth/login'
+    return NextResponse.redirect(url)
   }
-  
-  return await updateSession(request)
+
+  return NextResponse.next()
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 }

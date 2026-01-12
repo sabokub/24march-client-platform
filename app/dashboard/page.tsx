@@ -8,6 +8,8 @@ import { Home, Plus, FolderOpen, Settings, LogOut } from 'lucide-react'
 import { signOut } from '@/app/actions/auth'
 import { getStatusLabel, getStatusColor, formatDate } from '@/lib/utils'
 
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
   const supabase = await createClient()
   

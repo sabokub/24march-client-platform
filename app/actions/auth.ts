@@ -138,10 +138,10 @@ export async function resetPassword(formData: FormData) {
   const { email } = result.data
   const baseUrl = getBaseUrl()
 
-  // L'URL de redirection pointe vers /auth/confirm qui échangera le code
-  // puis redirigera vers /auth/update-password
+  // L'URL de redirection pointe DIRECTEMENT vers /auth/update-password
+  // La page échangera le code elle-même (plus robuste pour Codespaces)
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${baseUrl}/auth/confirm?next=/auth/update-password`,
+    redirectTo: `${baseUrl}/auth/update-password`,
   })
 
   if (error) {

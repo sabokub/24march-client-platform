@@ -5,30 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { signUpSchema, signInSchema, resetPasswordSchema } from '@/lib/validations'
 import { logAudit } from '@/lib/audit'
-
-/**
- * Récupère l'URL de base de manière robuste
- * Supporte Codespaces, Vercel, et développement local
- */
-function getBaseUrl(): string {
-  // 1. Variable d'environnement explicite (priorité)
-  if (process.env.NEXT_PUBLIC_BASE_URL) {
-    return process.env.NEXT_PUBLIC_BASE_URL
-  }
-  
-  // 2. Vercel (production/preview)
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`
-  }
-  
-  // 3. Codespaces
-  if (process.env.CODESPACE_NAME) {
-    return `https://${process.env.CODESPACE_NAME}-3000.app.github.dev`
-  }
-  
-  // 4. Fallback développement local
-  return 'http://localhost:3000'
-}
+import { getBaseUrl } from '@/lib/url'
 
 export async function signUp(formData: FormData) {
   const supabase = await createClient()

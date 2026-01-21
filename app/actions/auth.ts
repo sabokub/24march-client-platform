@@ -81,6 +81,19 @@ export async function signIn(formData: FormData) {
 
   if (data.user) {
     await logAudit('auth.login', data.user.id)
+    
+    // Vérifier si l'utilisateur est admin pour rediriger vers /admin
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', data.user.id)
+      .single()
+    
+    revalidatePath('/', 'layout')
+    
+    if (profile?.role === 'admin') {
+      redirect('/admin')
+    }
   }
 
   revalidatePath('/', 'layout')

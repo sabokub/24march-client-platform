@@ -1,19 +1,32 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { signIn } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Home } from 'lucide-react'
+import { Home, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  // Afficher les erreurs de redirection (ex: lien expiré)
+  useEffect(() => {
+    const error = searchParams.get('error')
+    if (error) {
+      toast.error(error)
+    }
+    
+    const message = searchParams.get('message')
+    if (message) {
+      toast.success(message)
+    }
+  }, [searchParams])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -26,7 +39,7 @@ export default function LoginPage() {
       toast.error(result.error)
       setIsLoading(false)
     }
-    // If no error, signIn redirects, so no need to handle success
+    // Si succès, signIn fait redirect vers /dashboard
   }
 
   return (
@@ -53,6 +66,7 @@ export default function LoginPage() {
                 placeholder="votre@email.com"
                 required
                 disabled={isLoading}
+                autoComplete="email"
               />
             </div>
             <div className="space-y-2">
@@ -69,6 +83,7 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 required
                 disabled={isLoading}
+                autoComplete="current-password"
               />
             </div>
             <Button 

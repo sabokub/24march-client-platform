@@ -10,10 +10,14 @@ https://votre-domaine.com
 ```
 
 ### Codespaces (URL dynamique)
+**IMPORTANT** : Mettez à jour cette URL chaque fois que vous créez un nouveau Codespace.
 ```
-https://CODESPACE_NAME-3000.app.github.dev
+https://VOTRE-CODESPACE-NAME-3000.app.github.dev
 ```
-Remplacez `CODESPACE_NAME` par le nom de votre Codespace.
+
+Pour trouver votre URL Codespace :
+1. Ouvrez l'onglet "Ports" dans VS Code
+2. Copiez l'URL du port 3000
 
 ### Local
 ```
@@ -22,81 +26,60 @@ http://localhost:3000
 
 ---
 
-## 2. Redirect URLs
+## 2. Redirect URLs (LISTE COMPLÈTE MINIMALE)
 
 Dans Supabase Dashboard > Authentication > URL Configuration > Redirect URLs :
 
-### URLs à ajouter (TOUTES obligatoires) :
-
 ```
 # Production
-https://votre-domaine.com/auth/confirm
-https://votre-domaine.com/auth/confirm?next=/auth/update-password
-https://votre-domaine.com/auth/confirm?next=/dashboard
+https://votre-domaine.com/auth/update-password
 
 # Local
-http://localhost:3000/auth/confirm
-http://localhost:3000/auth/confirm?next=/auth/update-password
-http://localhost:3000/auth/confirm?next=/dashboard
+http://localhost:3000/auth/update-password
 
-# Codespaces (pattern wildcard si supporté)
-https://*.app.github.dev/auth/confirm
-https://*.app.github.dev/auth/confirm?next=/auth/update-password
-https://*.app.github.dev/auth/confirm?next=/dashboard
+# Codespaces (pattern wildcard)
+https://*.app.github.dev/auth/update-password
+```
 
-# OU URL spécifique de votre Codespace
-https://xxx-3000.app.github.dev/auth/confirm
-https://xxx-3000.app.github.dev/auth/confirm?next=/auth/update-password
-https://xxx-3000.app.github.dev/auth/confirm?next=/dashboard
+**Note** : Si le wildcard ne fonctionne pas, ajoutez l'URL spécifique de votre Codespace :
+```
+https://ideal-journey-xxx-3000.app.github.dev/auth/update-password
 ```
 
 ---
 
-## 3. Email Templates
+## 3. Ce qu'il faut ÉVITER
 
-Dans Supabase Dashboard > Authentication > Email Templates :
-
-### Reset Password
-Le lien doit pointer vers `/auth/confirm` qui gèrera le code :
-```
-{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/auth/update-password
-```
-
-### Confirm Signup
-```
-{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next=/dashboard
-```
+❌ **Double port** : `https://xxx-3000-3000.app.github.dev`
+❌ **Trailing slash** : `https://xxx/auth/update-password/`
+❌ **HTTP au lieu de HTTPS** : `http://xxx.app.github.dev`
+❌ **Mauvais chemin** : `/auth/confirm` (utiliser `/auth/update-password`)
+❌ **Site URL différent du Redirect URL** : Les deux doivent pointer vers le même domaine
 
 ---
 
-## 4. Ce qu'il faut ÉVITER
-
-❌ NE PAS utiliser `/auth/update-password` directement comme redirect URL
-   → Le code doit d'abord être échangé par `/auth/confirm`
-
-❌ NE PAS oublier le paramètre `next=` dans les redirect URLs
-   → Sans lui, l'utilisateur ne sait pas où aller après
-
-❌ NE PAS hardcoder l'URL de base dans le code
-   → Utiliser `getBaseUrl()` qui détecte l'environnement
-
-❌ NE PAS utiliser le SDK Supabase dans le middleware Edge
-   → Incompatible avec l'Edge Runtime
-
----
-
-## 5. Flux Reset Password Complet
+## 4. Flow Reset Password Final
 
 ```
 1. User → /auth/reset-password (saisit email)
 2. Server Action → supabase.auth.resetPasswordForEmail()
-   → redirectTo: /auth/confirm?next=/auth/update-password
+   → redirectTo: {baseUrl}/auth/update-password
 3. Supabase envoie email avec lien :
-   → /auth/confirm?code=xxx&next=/auth/update-password
-4. User clique → /auth/confirm (Route Handler)
-   → Échange le code pour une session
-   → Redirect vers /auth/update-password
-5. User → /auth/update-password (saisit nouveau mdp)
-6. Server Action → supabase.auth.updateUser()
+   → /auth/update-password?code=xxx
+4. User clique → /auth/update-password
+   → Page échange le code pour une session
+   → User saisit nouveau mot de passe
+5. Server Action → supabase.auth.updateUser()
    → Redirect vers /dashboard
 ```
+
+---
+
+## 5. Debugging
+
+Si le lien ne fonctionne pas :
+
+1. **Vérifiez l'URL dans l'email** : Copiez le lien et inspectez-le
+2. **Vérifiez les logs** : `console.log` dans `/auth/update-password/page.tsx`
+3. **Vérifiez la Site URL** : Doit correspondre au domaine dans l'email
+4. **Vérifiez les Redirect URLs** : Doit inclure exactement le chemin utilisé

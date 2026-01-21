@@ -6,6 +6,30 @@ import { redirect } from 'next/navigation'
 import { signUpSchema, signInSchema, resetPasswordSchema } from '@/lib/validations'
 import { logAudit } from '@/lib/audit'
 
+/**
+ * Récupère l'URL de base de manière robuste
+ * Supporte Codespaces, Vercel, et développement local
+ */
+function getBaseUrl(): string {
+  // 1. Variable d'environnement explicite (priorité)
+  if (process.env.NEXT_PUBLIC_BASE_URL) {
+    return process.env.NEXT_PUBLIC_BASE_URL
+  }
+  
+  // 2. Vercel (production/preview)
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`
+  }
+  
+  // 3. Codespaces
+  if (process.env.CODESPACE_NAME) {
+    return `https://${process.env.CODESPACE_NAME}-3000.app.github.dev`
+  }
+  
+  // 4. Fallback développement local
+  return 'http://localhost:3000'
+}
+
 export async function signUp(formData: FormData) {
   const supabase = await createClient()
 
@@ -31,6 +55,7 @@ export async function signUp(formData: FormData) {
         name,
         phone,
       },
+      emailRedirectTo: `${getBaseUrl()}/auth/confirm?next=/dashboard`,
     },
   })
 
@@ -111,16 +136,19 @@ export async function resetPassword(formData: FormData) {
   }
 
   const { email } = result.data
+  const baseUrl = getBaseUrl()
 
+  // L'URL de redirection pointe vers /auth/confirm qui échangera le code
+  // puis redirigera vers /auth/update-password
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/update-password`,
+    redirectTo: `${baseUrl}/auth/confirm?next=/auth/update-password`,
   })
 
   if (error) {
     return { error: error.message }
   }
 
-  return { success: 'Email de réinitialisation envoyé' }
+  return { success: 'Email de réinitialisation envoyé. Vérifiez votre boîte mail.' }
 }
 
 export async function updatePassword(formData: FormData) {
@@ -130,6 +158,13 @@ export async function updatePassword(formData: FormData) {
 
   if (!password || password.length < 8) {
     return { error: 'Le mot de passe doit contenir au moins 8 caractères' }
+  }
+
+  // Vérifier que l'utilisateur a une session active (établie par /auth/confirm)
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  if (!user) {
+    return { error: 'Session expirée. Veuillez demander un nouveau lien de réinitialisation.' }
   }
 
   const { error } = await supabase.auth.updateUser({

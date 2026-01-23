@@ -6,10 +6,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Home } from 'lucide-react'
 
-async function onSignIn(formData: FormData): Promise<void> {
-  await signIn(formData)
-}
-
 export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-white flex items-center justify-center p-4">
@@ -26,7 +22,7 @@ export default function LoginPage() {
         </CardHeader>
 
         <CardContent>
-          <form action={onSignIn} className="space-y-4">
+          <form action={signIn} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input

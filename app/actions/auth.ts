@@ -1,5 +1,3 @@
-"use server";
-
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
@@ -8,6 +6,7 @@ import { redirect } from 'next/navigation'
 import { signUpSchema, signInSchema, resetPasswordSchema } from '@/lib/validations'
 import { logAudit } from '@/lib/audit'
 
+// Création d'un compte utilisateur
 export async function signUp(formData: FormData): Promise<void> {
   const supabase = await createClient()
 
@@ -46,6 +45,7 @@ export async function signUp(formData: FormData): Promise<void> {
   redirect('/dashboard')
 }
 
+// Connexion de l'utilisateur
 export async function signIn(formData: FormData): Promise<void> {
   const supabase = await createClient()
 
@@ -68,10 +68,13 @@ export async function signIn(formData: FormData): Promise<void> {
   redirect('/dashboard')
 }
 
+// Déconnexion de l'utilisateur
 export async function signOut(): Promise<void> {
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (user) await logAudit('auth.logout', user.id)
 
   await supabase.auth.signOut()
@@ -79,22 +82,37 @@ export async function signOut(): Promise<void> {
   redirect('/')
 }
 
+// Envoi du mail de réinitialisation de mot de passe
 export async function resetPassword(formData: FormData): Promise<void> {
   const supabase = await createClient()
 
-  const rawData = { email: formData.get('email') as string }
-  const result = resetPasswordSchema.safeParse(rawData)
+  // ✅ Nettoyage anti "email invalid" (espaces / retours ligne / casse)
+  const emailRaw = String(formData.get('email') ?? '')
+  const emailClean = emailRaw.trim().toLowerCase()
+
+  const result = resetPasswordSchema.safeParse({ email: emailClean })
   if (!result.success) throw new Error(result.error.errors[0].message)
 
   const { email } = result.data
 
+  // Envoi de l'e-mail avec l'URL de redirection (confirm -> update-password)
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/update-password`,
+    redirectTo: 'https://crispy-guide-pjp9xr6xvx4qh9xp6-3000.app.github.dev/auth/confirm',
   })
 
-  if (error) throw new Error(error.message)
+  if (error) {
+    const msg = error.message.toLowerCase()
+
+    // ✅ Message plus clair si tu spammes les emails
+    if (msg.includes('rate limit')) {
+      throw new Error("Trop de demandes envoyées. Attendez un peu (10–60 min) puis réessayez.")
+    }
+
+    throw new Error(error.message)
+  }
 }
 
+// Mise à jour du mot de passe sur la page /auth/update-password
 export async function updatePassword(formData: FormData): Promise<void> {
   const supabase = await createClient()
 

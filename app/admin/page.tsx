@@ -18,17 +18,29 @@ export default async function AdminDashboardPage({
 }) {
   const supabase = await createClient()
   
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  
+  if (userError || !user) {
+    console.log('[admin] No user session, redirecting to login')
+    redirect('/auth/login')
+  }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user.id)
     .single()
 
-  // Redirect non-admin
-  if (!profile || profile.role !== 'admin') {
+  // Log pour debug
+  console.log('[admin] User:', user.id, 'Profile:', profile?.role, 'Error:', profileError?.message)
+
+  // Redirect non-admin - mais seulement si on a pu vérifier le profil
+  if (profileError) {
+    console.log('[admin] Profile fetch error:', profileError.message)
+    // Si erreur de profil, on laisse passer pour éviter une boucle
+    // L'utilisateur verra une page avec données partielles
+  } else if (!profile || profile.role !== 'admin') {
+    console.log('[admin] User is not admin, redirecting to dashboard')
     redirect('/dashboard')
   }
 

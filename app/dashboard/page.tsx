@@ -13,21 +13,15 @@ export const dynamic = 'force-dynamic'
 export default async function DashboardPage() {
   const supabase = await createClient()
   
-  const { data: { user }, error: userError } = await supabase.auth.getUser()
-  
-  if (userError || !user) {
-    console.log('[dashboard] No user session, redirecting to login')
-    redirect('/auth/login')
-  }
+  // Le middleware a déjà vérifié l'auth
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login') // Fallback si pas de middleware
 
-  const { data: profile, error: profileError } = await supabase
+  const { data: profile } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user.id)
     .single()
-
-  // Log pour debug
-  console.log('[dashboard] User:', user.id, 'Profile:', profile?.role, 'Error:', profileError?.message)
 
   const { data: projects } = await supabase
     .from('projects')
@@ -35,11 +29,8 @@ export default async function DashboardPage() {
     .eq('owner_id', user.id)
     .order('created_at', { ascending: false })
 
-  // Redirect admin to admin dashboard - seulement si profil valide
-  if (profile?.role === 'admin') {
-    console.log('[dashboard] User is admin, redirecting to admin')
-    redirect('/admin')
-  }
+  // Note: La redirection admin est gérée par le middleware
+  // Si un admin arrive ici, c'est intentionnel (via URL directe)
 
   return (
     <div className="min-h-screen bg-gray-50">

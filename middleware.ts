@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from 'next/server'
+import { updateSession } from '@/lib/supabase/middleware'
 
 /**
- * Middleware léger - NE PAS utiliser le SDK Supabase ici
+ * Middleware Next.js
  * 
- * Le SDK Supabase utilise des APIs Node.js incompatibles avec l'Edge Runtime.
- * Ce middleware fait uniquement la protection basique des routes.
- * La validation réelle de session se fait dans les Server Components/Actions.
+ * - Si Supabase n'est pas configuré : protection basique
+ * - Si Supabase est configuré : utilise updateSession pour gérer les sessions et l'accès admin
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -33,29 +33,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Routes publiques (pas besoin d'auth)
-  const publicRoutes = ['/', '/auth/login', '/auth/signup', '/auth/reset-password', '/auth/confirm', '/auth/update-password']
-  const isPublicRoute = publicRoutes.some(route => pathname === route) || pathname.startsWith('/api')
-
-  if (isPublicRoute) {
-    return NextResponse.next()
-  }
-
-  // Pour les routes protégées, on vérifie la présence d'un cookie de session
-  // La validation réelle se fait dans les Server Components
-  const supabaseAuthCookie = request.cookies.getAll().find(
-    cookie => cookie.name.startsWith('sb-') && cookie.name.endsWith('-auth-token')
-  )
-
-  if (!supabaseAuthCookie) {
-    // Pas de cookie de session - rediriger vers login
-    const url = request.nextUrl.clone()
-    url.pathname = '/auth/login'
-    return NextResponse.redirect(url)
-  }
-
-  // Cookie présent - laisser passer (validation complète dans Server Component)
-  return NextResponse.next()
+  // Supabase configuré - utiliser updateSession pour :
+  // 1. Rafraîchir les tokens de session
+  // 2. Vérifier l'authentification
+  // 3. Vérifier l'accès admin
+  return await updateSession(request)
 }
 
 export const config = {

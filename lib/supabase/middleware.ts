@@ -1,15 +1,30 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
 
 type CookieToSet = {
   name: string
   value: string
-  options?: Record<string, unknown>
+  options?: Record<string, any>
 }
 
-export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // ✅ IMPORTANT: ne pas exécuter Supabase dans le middleware sur les routes publiques
+  const isPublicRoute =
+    pathname === '/' ||
+    pathname.startsWith('/auth') ||
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/favicon') ||
+    pathname.startsWith('/assets')
+
+  if (isPublicRoute) return NextResponse.next()
+
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
   })
 
   const supabase = createServerClient(
@@ -21,60 +36,20 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet: CookieToSet[]) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({
-            request,
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options)
           })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
         },
       },
     }
   )
 
-  // IMPORTANT: Avoid writing any logic between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
+  // 🔑 IMPORTANT : permet à Supabase de rafraîchir la session (sur routes protégées seulement)
+  await supabase.auth.getUser()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  return response
+}
 
-  // Protected routes
-  const isAuthRoute = request.nextUrl.pathname.startsWith('/auth')
-  const isPublicRoute = request.nextUrl.pathname === '/' || request.nextUrl.pathname.startsWith('/api')
-  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin')
-  const isDashboardRoute = request.nextUrl.pathname.startsWith('/dashboard')
-
-  if (!user && !isAuthRoute && !isPublicRoute) {
-    // Redirect to login if not authenticated
-    const url = request.nextUrl.clone()
-    url.pathname = '/auth/login'
-    return NextResponse.redirect(url)
-  }
-
-  if (user && isAuthRoute) {
-    // Redirect to dashboard if already authenticated
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
-  }
-
-  // Check admin access
-  if (user && isAdminRoute) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile || profile.role !== 'admin') {
-      const url = request.nextUrl.clone()
-      url.pathname = '/dashboard'
-      return NextResponse.redirect(url)
-    }
-  }
-
-  return supabaseResponse
+export const config = {
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 }

@@ -5,9 +5,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Home, ArrowLeft, FileImage, MessageCircle, ShoppingBag, Download, Upload } from 'lucide-react'
+import { Home, ArrowLeft } from 'lucide-react'
 import { signOut } from '@/app/actions/auth'
-import { getStatusLabel, getStatusColor, formatDate, formatPrice } from '@/lib/utils'
+import { getStatusLabel, getStatusColor, formatDate } from '@/lib/utils'
 import { ProjectBriefForm } from '@/components/project/brief-form'
 import { AssetUploader } from '@/components/project/asset-uploader'
 import { MessageList } from '@/components/project/message-list'
@@ -18,32 +18,54 @@ export const dynamic = 'force-dynamic'
 
 export default async function ProjectDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: profile } = await supabase
+  // Profile (role)
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user.id)
     .single()
 
-  const { data: project } = await supabase
+  if (profileError) {
+    // On ne fait pas planter la page, mais c’est utile en dev
+    console.error('[ProjectDetail] profile error:', profileError.message)
+  }
+
+  const isAdmin = profile?.role === 'admin'
+
+  // Project query
+  let query = supabase
     .from('projects')
-    .select(`
+    .select(
+      `
       *,
       project_briefs (*),
       assets (*),
       deliverables (*),
       shopping_lists (*, items:shopping_list_items(*))
-    `)
+    `
+    )
     .eq('id', params.id)
-    .eq('owner_id', user.id)
-    .single()
 
-  if (!project) {
-    notFound()
+  // Non-admin can only access their own projects
+  if (!isAdmin) {
+    query = query.eq('owner_id', user.id)
   }
+
+  const { data: project, error: projectError } = await query.single()
+
+  if (projectError) {
+    // Si c’est juste "not found", on notFound()
+    // Sinon, on log pour éviter de masquer une vraie erreur (RLS, relation, etc.)
+    console.error('[ProjectDetail] project error:', projectError.message)
+  }
+
+  if (!project) notFound()
 
   const brief = project.project_briefs?.[0] || null
   const assets = project.assets || []
@@ -58,7 +80,7 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/dashboard">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" type="button">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Retour
               </Button>
@@ -84,19 +106,21 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
         <div className="mb-8">
           <div className="flex items-start justify-between mb-2">
             <h1 className="text-2xl font-bold text-gray-900">{project.title}</h1>
-            <Badge className={getStatusColor(project.status)}>
-              {getStatusLabel(project.status)}
-            </Badge>
+            <Badge className={getStatusColor(project.status)}>{getStatusLabel(project.status)}</Badge>
           </div>
+
           <div className="flex items-center gap-4 text-sm text-gray-600">
             {project.room_type && <span>{project.room_type}</span>}
             {project.budget_range && <span>• {project.budget_range}</span>}
             <span>• Créé le {formatDate(project.created_at)}</span>
           </div>
+
           {project.style_tags && project.style_tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3">
               {project.style_tags.map((tag: string) => (
-                <Badge key={tag} variant="secondary">{tag}</Badge>
+                <Badge key={tag} variant="secondary">
+                  {tag}
+                </Badge>
               ))}
             </div>
           )}
@@ -115,16 +139,10 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
             <Card>
               <CardHeader>
                 <CardTitle>Brief du projet</CardTitle>
-                <CardDescription>
-                  Remplissez ce questionnaire pour nous aider à comprendre vos besoins
-                </CardDescription>
+                <CardDescription>Remplissez ce questionnaire pour nous aider à comprendre vos besoins</CardDescription>
               </CardHeader>
               <CardContent>
-                <ProjectBriefForm 
-                  projectId={project.id} 
-                  initialData={brief?.answers || {}}
-                  projectStatus={project.status}
-                />
+                <ProjectBriefForm projectId={project.id} initialData={brief?.answers || {}} projectStatus={project.status} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -133,15 +151,10 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
             <Card>
               <CardHeader>
                 <CardTitle>Photos de votre espace</CardTitle>
-                <CardDescription>
-                  Téléversez des photos de la pièce actuelle et/ou des plans
-                </CardDescription>
+                <CardDescription>Téléversez des photos de la pièce actuelle et/ou des plans</CardDescription>
               </CardHeader>
               <CardContent>
-                <AssetUploader 
-                  projectId={project.id} 
-                  assets={assets}
-                />
+                <AssetUploader projectId={project.id} assets={assets} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -150,14 +163,10 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
             <Card>
               <CardHeader>
                 <CardTitle>Livrables</CardTitle>
-                <CardDescription>
-                  Vos rendus 3D et documents de projet
-                </CardDescription>
+                <CardDescription>Vos rendus 3D et documents de projet</CardDescription>
               </CardHeader>
               <CardContent>
-                <DeliverablesList 
-                  deliverables={deliverables}
-                />
+                <DeliverablesList deliverables={deliverables} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -166,15 +175,10 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
             <Card>
               <CardHeader>
                 <CardTitle>Shopping List</CardTitle>
-                <CardDescription>
-                  Liste des produits sélectionnés pour votre projet
-                </CardDescription>
+                <CardDescription>Liste des produits sélectionnés pour votre projet</CardDescription>
               </CardHeader>
               <CardContent>
-                <ShoppingListView 
-                  shoppingList={latestShoppingList}
-                  isClient={true}
-                />
+                <ShoppingListView shoppingList={latestShoppingList} isClient={true} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -183,15 +187,10 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
             <Card>
               <CardHeader>
                 <CardTitle>Messages</CardTitle>
-                <CardDescription>
-                  Échangez avec notre décoratrice
-                </CardDescription>
+                <CardDescription>Échangez avec notre décoratrice</CardDescription>
               </CardHeader>
               <CardContent>
-                <MessageList 
-                  projectId={project.id}
-                  currentUserId={user.id}
-                />
+                <MessageList projectId={project.id} currentUserId={user.id} />
               </CardContent>
             </Card>
           </TabsContent>

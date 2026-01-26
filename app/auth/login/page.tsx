@@ -15,14 +15,14 @@ import { toast } from 'sonner'
 function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const searchParams = useSearchParams()
-  
+
   // Afficher les erreurs/messages de redirection
   useEffect(() => {
     const error = searchParams.get('error')
     if (error) {
       toast.error(error)
     }
-    
+
     const message = searchParams.get('message')
     if (message) {
       toast.success(message)
@@ -32,14 +32,18 @@ function LoginForm() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setIsLoading(true)
-    
+
     const formData = new FormData(e.currentTarget)
     const result = await signIn(formData)
-    
-    if (result?.error) {
-      toast.error(result.error)
+
+    // ✅ Nouveau contrat: { ok: false, message } | redirect()
+    if (result && 'ok' in result && result.ok === false) {
+      toast.error(result.message)
       setIsLoading(false)
+      return
     }
+
+    // Si ok => la server action redirect, donc on n’arrive (normalement) jamais ici.
   }
 
   return (
@@ -56,6 +60,7 @@ function LoginForm() {
           autoComplete="email"
         />
       </div>
+
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="password">Mot de passe</Label>
@@ -73,8 +78,9 @@ function LoginForm() {
           autoComplete="current-password"
         />
       </div>
-      <Button 
-        type="submit" 
+
+      <Button
+        type="submit"
         className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
         disabled={isLoading}
       >
@@ -125,10 +131,12 @@ export default function LoginPage() {
           <CardTitle>Connexion</CardTitle>
           <CardDescription>Connectez-vous à votre espace client</CardDescription>
         </CardHeader>
+
         <CardContent>
           <Suspense fallback={<LoginFormFallback />}>
             <LoginForm />
           </Suspense>
+
           <p className="mt-6 text-center text-sm text-gray-600">
             Pas encore de compte ?{' '}
             <Link href="/auth/signup" className="text-amber-600 hover:underline font-medium">

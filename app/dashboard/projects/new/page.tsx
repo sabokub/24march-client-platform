@@ -8,8 +8,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Home, ArrowLeft, ArrowRight, Check } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -58,36 +56,48 @@ export default function NewProjectPage() {
   })
 
   const handleStyleToggle = (style: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       style_tags: prev.style_tags.includes(style)
-        ? prev.style_tags.filter(s => s !== style)
-        : [...prev.style_tags, style]
+        ? prev.style_tags.filter((s) => s !== style)
+        : [...prev.style_tags, style],
     }))
   }
 
   const handleSubmit = async () => {
     setIsLoading(true)
-    
-    const form = new FormData()
-    form.append('title', formData.title)
-    form.append('room_type', formData.room_type)
-    form.append('budget_range', formData.budget_range)
-    formData.style_tags.forEach(tag => form.append('style_tags', tag))
-    
-    const result = await createProject(form)
-    
-    if (result.error) {
-      toast.error(result.error)
+
+    try {
+      const form = new FormData()
+      form.append('title', formData.title)
+      form.append('room_type', formData.room_type)
+      form.append('budget_range', formData.budget_range)
+      formData.style_tags.forEach((tag) => form.append('style_tags', tag))
+
+      const result = await createProject(form)
+
+      if (result?.error) {
+        toast.error(result.error)
+        return
+      }
+
+      if (result?.projectId) {
+        toast.success('Projet créé avec succès !')
+        router.push(`/dashboard/projects/${result.projectId}`)
+        return
+      }
+
+      toast.error('Erreur: projet non créé')
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Erreur inconnue'
+      toast.error(msg)
+    } finally {
       setIsLoading(false)
-    } else if (result.projectId) {
-      toast.success('Projet créé avec succès !')
-      router.push(`/dashboard/projects/${result.projectId}`)
     }
   }
 
   const canProceed = () => {
-    if (step === 1) return formData.title.length >= 3
+    if (step === 1) return formData.title.trim().length >= 3
     if (step === 2) return formData.room_type !== ''
     if (step === 3) return true
     return true
@@ -105,7 +115,7 @@ export default function NewProjectPage() {
             <span className="text-xl font-bold text-gray-900">24March Studio</span>
           </Link>
           <Link href="/dashboard">
-            <Button variant="ghost">
+            <Button type="button" variant="ghost">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Retour
             </Button>
@@ -129,9 +139,7 @@ export default function NewProjectPage() {
               >
                 {s < step ? <Check className="w-5 h-5" /> : s}
               </div>
-              {s < 4 && (
-                <div className={`w-16 h-1 ${s < step ? 'bg-green-500' : 'bg-gray-200'}`} />
-              )}
+              {s < 4 && <div className={`w-16 h-1 ${s < step ? 'bg-green-500' : 'bg-gray-200'}`} />}
             </div>
           ))}
         </div>
@@ -151,6 +159,7 @@ export default function NewProjectPage() {
               {step === 4 && 'Quels styles vous attirent ? (plusieurs choix possibles)'}
             </CardDescription>
           </CardHeader>
+
           <CardContent>
             {step === 1 && (
               <div className="space-y-4">
@@ -168,6 +177,7 @@ export default function NewProjectPage() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {ROOM_TYPES.map((room) => (
                   <Button
+                    type="button"
                     key={room}
                     variant={formData.room_type === room ? 'default' : 'outline'}
                     className={formData.room_type === room ? 'bg-amber-500 hover:bg-amber-600' : ''}
@@ -183,9 +193,12 @@ export default function NewProjectPage() {
               <div className="space-y-3">
                 {BUDGET_RANGES.map((budget) => (
                   <Button
+                    type="button"
                     key={budget}
                     variant={formData.budget_range === budget ? 'default' : 'outline'}
-                    className={`w-full justify-start ${formData.budget_range === budget ? 'bg-amber-500 hover:bg-amber-600' : ''}`}
+                    className={`w-full justify-start ${
+                      formData.budget_range === budget ? 'bg-amber-500 hover:bg-amber-600' : ''
+                    }`}
                     onClick={() => setFormData({ ...formData, budget_range: budget })}
                   >
                     {budget}
@@ -198,6 +211,7 @@ export default function NewProjectPage() {
               <div className="grid grid-cols-2 gap-3">
                 {STYLE_TAGS.map((style) => (
                   <Button
+                    type="button"
                     key={style}
                     variant={formData.style_tags.includes(style) ? 'default' : 'outline'}
                     className={formData.style_tags.includes(style) ? 'bg-amber-500 hover:bg-amber-600' : ''}
@@ -211,6 +225,7 @@ export default function NewProjectPage() {
 
             <div className="flex justify-between mt-8">
               <Button
+                type="button"
                 variant="outline"
                 onClick={() => setStep(step - 1)}
                 disabled={step === 1}
@@ -218,9 +233,10 @@ export default function NewProjectPage() {
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Précédent
               </Button>
-              
+
               {step < 4 ? (
                 <Button
+                  type="button"
                   onClick={() => setStep(step + 1)}
                   disabled={!canProceed()}
                   className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
@@ -230,6 +246,7 @@ export default function NewProjectPage() {
                 </Button>
               ) : (
                 <Button
+                  type="button"
                   onClick={handleSubmit}
                   disabled={isLoading}
                   className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"

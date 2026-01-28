@@ -1,14 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createProject } from '@/app/actions/projects'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Home, ArrowLeft, ArrowRight, Check } from 'lucide-react'
+import { Home, ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 const ROOM_TYPES = [
@@ -44,8 +43,12 @@ const STYLE_TAGS = [
   'Japandi',
 ]
 
+// Next.js déclenche un redirect() via une “erreur” spéciale
+function isNextRedirectError(e: unknown) {
+  return typeof (e as any)?.digest === 'string' && (e as any).digest.startsWith('NEXT_REDIRECT')
+}
+
 export default function NewProjectPage() {
-  const router = useRouter()
   const [step, setStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -76,24 +79,27 @@ export default function NewProjectPage() {
 
       const result = await createProject(form)
 
-      if (result?.error) {
-        toast.error(result.error)
+      // ✅ Erreur “contrôlée” renvoyée par la Server Action
+      if (result?.ok === false) {
+        toast.error(result.message)
+        setIsLoading(false)
         return
       }
 
-      if (result?.projectId) {
-        toast.success('Projet créé avec succès !')
-        router.push(`/dashboard/projects/${result.projectId}`)
-        return
-      }
-
-      toast.error('Erreur: projet non créé')
+      // ✅ Succès : si la Server Action fait redirect(), on ne doit rien faire ici.
+      // (En dev, si un jour tu changes createProject pour retourner ok:true, tu peux afficher un toast success ici)
     } catch (e) {
+      // ✅ IMPORTANT : un redirect() côté server “remonte” ici sous forme d’exception NEXT_REDIRECT
+      if (isNextRedirectError(e)) return
+
       const msg = e instanceof Error ? e.message : 'Erreur inconnue'
       toast.error(msg)
-    } finally {
       setIsLoading(false)
+      return
     }
+
+    // Si on arrive ici sans redirect, on stoppe le loader quand même
+    setIsLoading(false)
   }
 
   const canProceed = () => {
@@ -224,12 +230,7 @@ export default function NewProjectPage() {
             )}
 
             <div className="flex justify-between mt-8">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setStep(step - 1)}
-                disabled={step === 1}
-              >
+              <Button type="button" variant="outline" onClick={() => setStep(step - 1)} disabled={step === 1 || isLoading}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Précédent
               </Button>
@@ -238,7 +239,7 @@ export default function NewProjectPage() {
                 <Button
                   type="button"
                   onClick={() => setStep(step + 1)}
-                  disabled={!canProceed()}
+                  disabled={!canProceed() || isLoading}
                   className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
                 >
                   Suivant
@@ -251,8 +252,17 @@ export default function NewProjectPage() {
                   disabled={isLoading}
                   className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
                 >
-                  {isLoading ? 'Création...' : 'Créer le projet'}
-                  <Check className="w-4 h-4 ml-2" />
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Création...
+                    </>
+                  ) : (
+                    <>
+                      Créer le projet
+                      <Check className="w-4 h-4 ml-2" />
+                    </>
+                  )}
                 </Button>
               )}
             </div>

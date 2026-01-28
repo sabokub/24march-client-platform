@@ -64,9 +64,13 @@ function LoginForm() {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="password">Mot de passe</Label>
-          <Link href="/auth/reset-password" className="text-sm text-amber-600 hover:underline">
-            Mot de passe oublié ?
-          </Link>
+          <Link
+  href="/auth/reset-password"
+  className="text-sm text-amber-600 hover:text-amber-700"
+>
+  Mot de passe oublié ?
+</Link>
+
         </div>
         <Input
           id="password"

@@ -14,18 +14,23 @@ export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setIsLoading(true)
-    
-    const formData = new FormData(e.currentTarget)
-    const result = await signUp(formData)
-    
-    if (result?.error) {
-      toast.error(result.error)
-      setIsLoading(false)
-    }
-    // If no error, signUp redirects
+  e.preventDefault()
+  setIsLoading(true)
+
+  const formData = new FormData(e.currentTarget)
+  const result = await signUp(formData)
+
+  if (!result?.ok) {
+    toast.error(result?.message ?? 'Une erreur est survenue')
+    setIsLoading(false)
+    return
   }
+
+  toast.success('Compte créé')
+  
+  // Si ok === true, signUp va redirect, donc rien à faire ici.
+}
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-white flex items-center justify-center p-4">

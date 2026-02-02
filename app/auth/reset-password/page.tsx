@@ -16,15 +16,16 @@ export default function ResetPasswordPage() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setIsLoading(true)
-    
+
     const formData = new FormData(e.currentTarget)
     const result = await resetPassword(formData)
-    
+
     if (!result?.ok) {
-  toast.error(result?.message ?? 'Une erreur est survenue')
-} else {
-  toast.success('Email de réinitialisation envoyé')
-}
+      toast.error(result?.message ?? 'Une erreur est survenue')
+    } else {
+      toast.success('Email de réinitialisation envoyé')
+    }
+
     setIsLoading(false)
   }
 
@@ -54,15 +55,19 @@ export default function ResetPasswordPage() {
                 disabled={isLoading}
               />
             </div>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
               disabled={isLoading}
             >
               {isLoading ? 'Envoi...' : 'Envoyer le lien'}
             </Button>
           </form>
-          <Link href="/auth/login" className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-600 hover:text-gray-900">
+
+          <Link
+            href="/auth/login"
+            className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+          >
             <ArrowLeft className="w-4 h-4" />
             Retour à la connexion
           </Link>

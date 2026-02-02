@@ -20,11 +20,11 @@ export default function ResetPasswordPage() {
     const formData = new FormData(e.currentTarget)
     const result = await resetPassword(formData)
     
-    if (result?.error) {
-      toast.error(result.error)
-    } else if (result?.success) {
-      toast.success(result.success)
-    }
+    if (!result?.ok) {
+  toast.error(result?.message ?? 'Une erreur est survenue')
+} else {
+  toast.success('Email de réinitialisation envoyé')
+}
     setIsLoading(false)
   }
 

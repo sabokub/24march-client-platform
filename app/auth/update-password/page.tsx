@@ -81,34 +81,39 @@ function UpdatePasswordForm() {
   }, [searchParams, router])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setIsLoading(true)
-    
-    const formData = new FormData(e.currentTarget)
-    const password = formData.get('password') as string
-    const confirmPassword = formData.get('confirmPassword') as string
+  e.preventDefault()
+  setIsLoading(true)
 
-    // Validation côté client
-    if (password !== confirmPassword) {
-      toast.error('Les mots de passe ne correspondent pas')
-      setIsLoading(false)
-      return
-    }
+  const formData = new FormData(e.currentTarget)
+  const password = formData.get('password') as string
+  const confirmPassword = formData.get('confirmPassword') as string
 
-    if (password.length < 8) {
-      toast.error('Le mot de passe doit contenir au moins 8 caractères')
-      setIsLoading(false)
-      return
-    }
-
-    const result = await updatePassword(formData)
-    
-    if (result?.error) {
-      toast.error(result.error)
-      setIsLoading(false)
-    }
-    // Si succès, updatePassword fait redirect vers /dashboard
+  if (password !== confirmPassword) {
+    toast.error('Les mots de passe ne correspondent pas')
+    setIsLoading(false)
+    return
   }
+
+  if (password.length < 8) {
+    toast.error('Le mot de passe doit contenir au moins 8 caractères')
+    setIsLoading(false)
+    return
+  }
+
+  const result = await updatePassword(formData)
+
+  if (!result?.ok) {
+    toast.error(result?.message ?? 'Une erreur est survenue')
+    setIsLoading(false)
+    return
+  }
+
+  toast.success('Mot de passe mis à jour')
+  setIsLoading(false)
+  // note : si l'action redirect, ce toast ne s'affichera pas, c’est normal
+}
+
+
 
   // État: Chargement / Échange du code
   if (isExchangingCode) {

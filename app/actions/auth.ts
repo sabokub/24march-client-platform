@@ -7,30 +7,22 @@ import { signUpSchema, signInSchema, resetPasswordSchema } from '@/lib/validatio
 import { logAudit } from '@/lib/audit'
 import { getBaseUrl } from '@/lib/url'
 
-<<<<<<< HEAD
-export async function signUp(formData: FormData) {
-=======
 type ActionResult = { ok: true } | { ok: false; message: string }
 
 // Création d'un compte utilisateur
 export async function signUp(formData: FormData): Promise<ActionResult> {
->>>>>>> dff56a9 (feat(dashboard): save empty state placeholder for projects)
   const supabase = await createClient()
 
   const rawData = {
-    email: formData.get('email') as string,
-    password: formData.get('password') as string,
-    name: formData.get('name') as string,
-    phone: (formData.get('phone') as string) || undefined,
+    email: String(formData.get('email') ?? '').trim().toLowerCase(),
+    password: String(formData.get('password') ?? ''),
+    name: String(formData.get('name') ?? ''),
+    phone: (String(formData.get('phone') ?? '').trim() || undefined) as string | undefined,
   }
 
   const result = signUpSchema.safeParse(rawData)
   if (!result.success) {
-<<<<<<< HEAD
-    return { error: result.error.errors[0].message }
-=======
     return { ok: false, message: result.error.errors[0].message }
->>>>>>> dff56a9 (feat(dashboard): save empty state placeholder for projects)
   }
 
   const { email, password, name, phone } = result.data
@@ -45,11 +37,7 @@ export async function signUp(formData: FormData): Promise<ActionResult> {
   })
 
   if (error) {
-<<<<<<< HEAD
-    return { error: error.message }
-=======
     return { ok: false, message: error.message }
->>>>>>> dff56a9 (feat(dashboard): save empty state placeholder for projects)
   }
 
   // Create profile
@@ -70,15 +58,10 @@ export async function signUp(formData: FormData): Promise<ActionResult> {
   redirect('/dashboard')
 }
 
-<<<<<<< HEAD
-export async function signIn(formData: FormData) {
-=======
 // Connexion de l'utilisateur
 export async function signIn(formData: FormData): Promise<ActionResult> {
->>>>>>> dff56a9 (feat(dashboard): save empty state placeholder for projects)
   const supabase = await createClient()
 
-  // ✅ Nettoyage email (espaces / retours ligne / casse) — évite des faux "Invalid login credentials"
   const emailRaw = String(formData.get('email') ?? '')
   const passwordRaw = String(formData.get('password') ?? '')
 
@@ -89,24 +72,14 @@ export async function signIn(formData: FormData): Promise<ActionResult> {
 
   const result = signInSchema.safeParse(rawData)
   if (!result.success) {
-<<<<<<< HEAD
-    return { error: result.error.errors[0].message }
-=======
     return { ok: false, message: result.error.errors[0].message }
->>>>>>> dff56a9 (feat(dashboard): save empty state placeholder for projects)
   }
 
   const { email, password } = result.data
 
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-
-  // ✅ IMPORTANT: ne pas throw ici (sinon Unhandled Runtime Error + session pas stable)
   if (error) {
-<<<<<<< HEAD
-    return { error: error.message }
-=======
-    return { ok: false, message: error.message } // "Invalid login credentials" etc.
->>>>>>> dff56a9 (feat(dashboard): save empty state placeholder for projects)
+    return { ok: false, message: error.message }
   }
 
   const user = data.user
@@ -142,8 +115,11 @@ export async function signIn(formData: FormData): Promise<ActionResult> {
 
 export async function signOut() {
   const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
   if (user) {
     await logAudit('auth.logout', user.id)
   }
@@ -153,55 +129,28 @@ export async function signOut() {
   redirect('/')
 }
 
-<<<<<<< HEAD
-export async function resetPassword(formData: FormData) {
-=======
 // Envoi du mail de réinitialisation de mot de passe
 export async function resetPassword(formData: FormData): Promise<ActionResult> {
->>>>>>> dff56a9 (feat(dashboard): save empty state placeholder for projects)
   const supabase = await createClient()
 
-  const rawData = {
-    email: formData.get('email') as string,
-  }
-
-<<<<<<< HEAD
-  const result = resetPasswordSchema.safeParse(rawData)
-  if (!result.success) {
-    return { error: result.error.errors[0].message }
-  }
-=======
+  const emailClean = String(formData.get('email') ?? '').trim().toLowerCase()
   const result = resetPasswordSchema.safeParse({ email: emailClean })
   if (!result.success) return { ok: false, message: result.error.errors[0].message }
->>>>>>> dff56a9 (feat(dashboard): save empty state placeholder for projects)
 
   const { email } = result.data
   const baseUrl = getBaseUrl()
 
-<<<<<<< HEAD
-  // L'URL de redirection pointe DIRECTEMENT vers /auth/update-password
-  // La page échangera le code elle-même (plus robuste pour Codespaces)
-=======
->>>>>>> dff56a9 (feat(dashboard): save empty state placeholder for projects)
+  // redirige vers /auth/update-password (ta page gère la suite)
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${baseUrl}/auth/update-password`,
   })
 
   if (error) {
-<<<<<<< HEAD
-    return { error: error.message }
-  }
-
-  return { success: 'Email de réinitialisation envoyé. Vérifiez votre boîte mail.' }
-}
-
-export async function updatePassword(formData: FormData) {
-=======
     const msg = error.message.toLowerCase()
     if (msg.includes('rate limit')) {
       return {
         ok: false,
-        message: "Trop de demandes envoyées. Attendez un peu (10–60 min) puis réessayez.",
+        message: "Trop de demandes envoyées. Attends un peu (10–60 min) puis réessaie.",
       }
     }
     return { ok: false, message: error.message }
@@ -212,52 +161,27 @@ export async function updatePassword(formData: FormData) {
 
 // Mise à jour du mot de passe sur la page /auth/update-password
 export async function updatePassword(formData: FormData): Promise<ActionResult> {
->>>>>>> dff56a9 (feat(dashboard): save empty state placeholder for projects)
   const supabase = await createClient()
 
-  const password = formData.get('password') as string
+  const password = String(formData.get('password') ?? '')
 
   if (!password || password.length < 8) {
-<<<<<<< HEAD
-    return { error: 'Le mot de passe doit contenir au moins 8 caractères' }
-  }
-
-  // Vérifier que l'utilisateur a une session active (établie par /auth/confirm)
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
-    return { error: 'Session expirée. Veuillez demander un nouveau lien de réinitialisation.' }
-=======
     return { ok: false, message: 'Le mot de passe doit contenir au moins 8 caractères' }
   }
 
-  // Vérifier que l'utilisateur a une session active (établie par /auth/confirm)
   const {
     data: { user },
     error: userError,
   } = await supabase.auth.getUser()
 
-  if (userError) {
-    return { ok: false, message: userError.message }
->>>>>>> dff56a9 (feat(dashboard): save empty state placeholder for projects)
-  }
+  if (userError) return { ok: false, message: userError.message }
 
   if (!user) {
-    return {
-      ok: false,
-      message: 'Session expirée. Veuillez demander un nouveau lien de réinitialisation.',
-    }
+    return { ok: false, message: 'Session expirée. Veuillez demander un nouveau lien.' }
   }
 
   const { error } = await supabase.auth.updateUser({ password })
-
-  if (error) {
-<<<<<<< HEAD
-    return { error: error.message }
-=======
-    return { ok: false, message: error.message }
->>>>>>> dff56a9 (feat(dashboard): save empty state placeholder for projects)
-  }
+  if (error) return { ok: false, message: error.message }
 
   revalidatePath('/', 'layout')
   redirect('/dashboard')

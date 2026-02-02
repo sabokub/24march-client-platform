@@ -26,8 +26,9 @@ export async function middleware(request: NextRequest) {
                           pathname.startsWith('/api')
     
     if (!isPublicRoute) {
+      // Protected routes (including /admin) redirect to /auth/login
       const url = request.nextUrl.clone()
-      url.pathname = '/'
+      url.pathname = '/auth/login'
       return NextResponse.redirect(url)
     }
     return NextResponse.next()

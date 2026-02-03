@@ -22,6 +22,7 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
   const {
     data: { user },
   } = await supabase.auth.getUser()
+
   if (!user) redirect('/auth/login')
 
   // Profile (role)
@@ -32,7 +33,6 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
     .single()
 
   if (profileError) {
-    // On ne fait pas planter la page, mais c’est utile en dev
     console.error('[ProjectDetail] profile error:', profileError.message)
   }
 
@@ -52,16 +52,14 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
     )
     .eq('id', params.id)
 
-  // Non-admin can only access their own projects
+  // Non-admin can only access projects where they are owner OR client
   if (!isAdmin) {
-    query = query.eq('owner_id', user.id)
+    query = query.or(`owner_id.eq.${user.id},client_id.eq.${user.id}`)
   }
 
   const { data: project, error: projectError } = await query.single()
 
   if (projectError) {
-    // Si c’est juste "not found", on notFound()
-    // Sinon, on log pour éviter de masquer une vraie erreur (RLS, relation, etc.)
     console.error('[ProjectDetail] project error:', projectError.message)
   }
 

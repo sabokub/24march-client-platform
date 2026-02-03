@@ -3,30 +3,29 @@ import { updateSession } from '@/lib/supabase/middleware'
 
 /**
  * Middleware Next.js
- * 
- * - Si Supabase n'est pas configuré : protection basique
+ *
+ * - Si Supabase n'est pas configuré : protection basique uniquement pour /admin
  * - Si Supabase est configuré : utilise updateSession pour gérer les sessions et l'accès admin
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  
+
   // Check if Supabase is configured
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  
-  const isConfigured = supabaseUrl && 
-                       supabaseKey && 
-                       !supabaseUrl.includes('your_') && 
-                       !supabaseKey.includes('your_')
-  
+
+  const isConfigured =
+    !!supabaseUrl &&
+    !!supabaseKey &&
+    !supabaseUrl.includes('your_') &&
+    !supabaseKey.includes('your_')
+
+  // Routes à protéger même en fallback
+  const isAdminRoute = pathname === '/admin' || pathname.startsWith('/admin/')
+
   if (!isConfigured) {
-    // Supabase non configuré - autoriser uniquement les routes publiques
-    const isPublicRoute = pathname === '/' || 
-                          pathname.startsWith('/auth') ||
-                          pathname.startsWith('/api')
-    
-    if (!isPublicRoute) {
-      // Protected routes (including /admin) redirect to /auth/login
+    // Supabase non configuré - fallback : on protège uniquement /admin
+    if (isAdminRoute) {
       const url = request.nextUrl.clone()
       url.pathname = '/auth/login'
       return NextResponse.redirect(url)

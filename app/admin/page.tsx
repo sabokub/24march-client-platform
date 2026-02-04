@@ -41,6 +41,13 @@ export default async function AdminDashboardPage({
 
   const { data: projects } = await query
 
+  // Ensure projects are sorted by created_at desc (stable for duplicates)
+  const sortedProjects = (projects || []).slice().sort((a: any, b: any) => {
+    const ta = new Date(a.created_at).getTime() || 0
+    const tb = new Date(b.created_at).getTime() || 0
+    return tb - ta
+  })
+
   // Fetch owners for the projects (avoid embedding relations in the main query)
   let ownersMap: Record<string, { name?: string; email?: string } | undefined> = {}
   if (projects && projects.length > 0) {
@@ -176,7 +183,7 @@ export default async function AdminDashboardPage({
                     </tr>
                   </thead>
                   <tbody>
-                    {projects.map((project) => {
+                    {sortedProjects.map((project) => {
                       const ownerData = (ownersMap as any)[project.owner_id] ?? null
                       return (
                         <tr key={project.id} className="border-b hover:bg-gray-50">

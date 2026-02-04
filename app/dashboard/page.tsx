@@ -29,6 +29,13 @@ export default async function DashboardPage() {
     .eq('owner_id', user.id)
     .order('created_at', { ascending: false })
 
+  // Ensure projects are sorted by created_at desc (stable for duplicates)
+  const sortedProjects = (projects || []).slice().sort((a: any, b: any) => {
+    const ta = new Date(a.created_at).getTime() || 0
+    const tb = new Date(b.created_at).getTime() || 0
+    return tb - ta
+  })
+
   // Note: La redirection admin est gérée par le middleware
   // Si un admin arrive ici, c'est intentionnel (via URL directe)
 
@@ -85,7 +92,7 @@ export default async function DashboardPage() {
           </Card>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project) => (
+            {sortedProjects.map((project) => (
               <Link key={project.id} href={`/dashboard/projects/${project.id}`}>
                 <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
                   <CardHeader>

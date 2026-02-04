@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic'
 export default async function AdminDashboardPage({
   searchParams,
 }: {
-  searchParams: { status?: string }
+  searchParams: { status?: string; search?: string }
 }) {
   const supabase = await createClient()
   
@@ -35,8 +35,13 @@ export default async function AdminDashboardPage({
     .order('created_at', { ascending: false })
 
   const statusFilter = searchParams.status
+  const titleSearch = (searchParams.search || '').trim()
   if (statusFilter && statusFilter !== 'all') {
     query = query.eq('status', statusFilter)
+  }
+
+  if (titleSearch) {
+    query = query.ilike('title', `%${titleSearch}%`)
   }
 
   const { data: projects } = await query
@@ -146,7 +151,13 @@ export default async function AdminDashboardPage({
                 <CardTitle>Projets</CardTitle>
                 <CardDescription>Gérez tous les projets clients</CardDescription>
               </div>
-              <form method="GET">
+              <form method="GET" className="flex items-center gap-3">
+                <input
+                  name="search"
+                  defaultValue={titleSearch}
+                  placeholder="Rechercher titre"
+                  className="px-3 py-2 border rounded w-48 text-sm"
+                />
                 <Select name="status" defaultValue={statusFilter || 'all'}>
                   <SelectTrigger className="w-48">
                     <SelectValue placeholder="Filtrer par statut" />

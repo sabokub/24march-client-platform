@@ -65,19 +65,14 @@ export async function uploadAssets(formData: FormData) {
     }
 
     const { error: dbError } = await supabase.from('assets').insert({
-      id: assetId,
       project_id: projectId,
-      owner_id: user.id,
-      type: assetType,
+      user_id: user.id,
       storage_path: storagePath,
-      file_name: file.name,
-      file_size: file.size,
-      mime_type: file.type,
     })
 
     if (dbError) {
-      errors.push(`${file.name}: Erreur base de données`)
-      continue
+      console.error('❌ uploadAssets dbError:', dbError)
+      return { error: dbError.message }
     }
 
     uploadedAssets.push(assetId)
@@ -116,7 +111,7 @@ export async function deleteAsset(assetId: string) {
     .from('assets')
     .select('*, project:projects(id)')
     .eq('id', assetId)
-    .eq('owner_id', user.id)
+    .eq('user_id', user.id)
     .single()
 
   if (!asset) {
@@ -246,7 +241,7 @@ export async function getAssetUrl(assetId: string) {
   let query = supabase.from('assets').select('storage_path').eq('id', assetId)
   
   if (profile?.role !== 'admin') {
-    query = query.eq('owner_id', user.id)
+    query = query.eq('user_id', user.id)
   }
 
   const { data: asset } = await query.single()

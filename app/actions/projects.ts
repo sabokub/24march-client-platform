@@ -40,6 +40,7 @@ export async function createProject(formData: FormData): Promise<ActionResult<{ 
     owner_id: user.id,
     status: 'draft',
     title: result.data.title,
+    room_type: result.data.room_type,
   }
 
   const { error } = await supabase.from('projects').insert(payload)

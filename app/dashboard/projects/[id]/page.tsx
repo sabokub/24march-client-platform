@@ -37,37 +37,47 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
 
   const isAdmin = profile?.role === 'admin'
 
-  // Project query (IMPORTANT: remove project_briefs join to avoid schema-cache relationship error)
-  let query = supabase
-    .from('projects')
-    .select(
-      `
-      *,
-      assets (*),
-      deliverables (*),
-      shopping_lists (*, items:shopping_list_items(*))
-    `
-    )
-    .eq('id', params.id)
+  // ✅ IMPORTANT: ne pas faire de joins vers des tables inexistantes
+  // Project query (table projects existe)
+  let projectQuery = supabase.from('projects').select('*').eq('id', params.id)
 
   // Non-admin can only access their own projects
   if (!isAdmin) {
-    // If you also support client_id access, add OR logic by policy; keep minimal here:
-    query = query.eq('owner_id', user.id)
+    projectQuery = projectQuery.eq('owner_id', user.id)
   }
 
-  const { data: project, error: projectError } = await query.single()
+  const { data: project, error: projectError } = await projectQuery.single()
 
   if (projectError) {
     console.error('[ProjectDetail] project error:', projectError.message)
   }
-
   if (!project) notFound()
 
-  const assets = project.assets || []
-  const deliverables = project.deliverables || []
-  const shoppingLists = project.shopping_lists || []
-  const latestShoppingList = shoppingLists[shoppingLists.length - 1] || null
+  // ✅ Tables existantes: messages, deliverables
+  const [messagesRes, deliverablesRes] = await Promise.all([
+    supabase
+      .from('messages')
+      .select('*')
+      .eq('project_id', project.id)
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('deliverables')
+      .select('*')
+      .eq('project_id', project.id)
+      .order('created_at', { ascending: false }),
+  ])
+
+  const messages = messagesRes.data || []
+  const deliverables = deliverablesRes.data || []
+
+  if (messagesRes.error) console.error('[ProjectDetail] messages error:', messagesRes.error.message)
+  if (deliverablesRes.error) console.error('[ProjectDetail] deliverables error:', deliverablesRes.error.message)
+
+  // ✅ Ces tables n’existent pas dans ton schéma actuel -> on passe des valeurs vides
+  const assets: any[] = []
+  const deliverablesList = deliverables || []
+  const shoppingLists: any[] = []
+  const latestShoppingList = null
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -162,7 +172,7 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
                 <CardDescription>Vos rendus 3D et documents de projet</CardDescription>
               </CardHeader>
               <CardContent>
-                <DeliverablesList deliverables={deliverables} />
+                <DeliverablesList deliverables={deliverablesList} />
               </CardContent>
             </Card>
           </TabsContent>

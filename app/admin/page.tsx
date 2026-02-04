@@ -202,7 +202,14 @@ export default async function AdminDashboardPage({
                             <p className="font-medium">{project.title}</p>
                           </td>
                           <td className="py-3 px-4">
-                            <p className="text-sm">{ownerData?.name && ownerData.name.trim() !== '' ? ownerData.name : 'N/A'}</p>
+                            {ownerData?.name && ownerData.name.trim() !== '' ? (
+                              <div>
+                                <div className="font-medium">{ownerData.name}</div>
+                                <div className="text-sm text-muted-foreground">{ownerData.email}</div>
+                              </div>
+                            ) : (
+                              'N/A'
+                            )}
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-600">
                             {project.room_type ?? '-'}

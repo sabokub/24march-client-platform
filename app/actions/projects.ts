@@ -207,14 +207,7 @@ export async function getProject(projectId: string) {
 
   let query = supabase
     .from('projects')
-    .select(`
-      *,
-      project_briefs (*),
-      assets (*),
-      deliverables (*),
-      messages (*, sender:profiles(name, role)),
-      shopping_lists (*, items:shopping_list_items(*))
-    `)
+    .select('*')
     .eq('id', projectId)
 
   if (profile?.role !== 'admin') {

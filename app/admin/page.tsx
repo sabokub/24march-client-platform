@@ -28,13 +28,10 @@ export default async function AdminDashboardPage({
     .eq('id', user.id)
     .single()
 
-  // Get all projects with owner info
+  // Get all projects (no embedded joins to avoid relation errors)
   let query = supabase
     .from('projects')
-    .select(`
-      *,
-      owner:profiles(name, email)
-    `)
+    .select('*')
     .order('created_at', { ascending: false })
 
   const statusFilter = searchParams.status

@@ -251,3 +251,35 @@ export async function getAllProjects(status?: string) {
 
   return { projects }
 }
+
+export async function updateProjectRoomType(projectId: string, roomType: string) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autorisé' }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile || profile.role !== 'admin') {
+    return { error: 'Réservé aux administrateurs' }
+  }
+
+  const { error } = await supabase
+    .from('projects')
+    .update({ room_type: roomType })
+    .eq('id', projectId)
+
+  if (error) return { error: error.message }
+
+  try {
+    revalidatePath('/admin')
+  } catch (e) {
+    // ignore if revalidatePath unavailable
+  }
+
+  return { success: true }
+}

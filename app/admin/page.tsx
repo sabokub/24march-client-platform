@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Home, LogOut, FolderOpen, Users, TrendingUp } from 'lucide-react'
 import { signOut } from '@/app/actions/auth'
 import { getStatusLabel, getStatusColor, formatDate } from '@/lib/utils'
+import RoomTypeSelect from '@/components/admin/RoomTypeSelect'
 
 export const dynamic = 'force-dynamic'
 
@@ -211,7 +212,7 @@ export default async function AdminDashboardPage({
                             )}
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-600">
-                            {project.room_type ?? '-'}
+                            <RoomTypeSelect projectId={project.id} value={project.room_type} />
                           </td>
                           <td className="py-3 px-4">
                             <Badge className={getStatusColor(project.status)}>

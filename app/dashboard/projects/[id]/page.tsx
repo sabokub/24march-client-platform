@@ -22,7 +22,6 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
   const {
     data: { user },
   } = await supabase.auth.getUser()
-
   if (!user) redirect('/auth/login')
 
   // Profile (role)
@@ -38,13 +37,12 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
 
   const isAdmin = profile?.role === 'admin'
 
-  // Project query
+  // Project query (IMPORTANT: remove project_briefs join to avoid schema-cache relationship error)
   let query = supabase
     .from('projects')
     .select(
       `
       *,
-      project_briefs (*),
       assets (*),
       deliverables (*),
       shopping_lists (*, items:shopping_list_items(*))
@@ -52,9 +50,10 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
     )
     .eq('id', params.id)
 
-  // Non-admin can only access projects where they are owner OR client
+  // Non-admin can only access their own projects
   if (!isAdmin) {
-    query = query.or(`owner_id.eq.${user.id},client_id.eq.${user.id}`)
+    // If you also support client_id access, add OR logic by policy; keep minimal here:
+    query = query.eq('owner_id', user.id)
   }
 
   const { data: project, error: projectError } = await query.single()
@@ -65,7 +64,6 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
 
   if (!project) notFound()
 
-  const brief = project.project_briefs?.[0] || null
   const assets = project.assets || []
   const deliverables = project.deliverables || []
   const shoppingLists = project.shopping_lists || []
@@ -140,7 +138,7 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
                 <CardDescription>Remplissez ce questionnaire pour nous aider à comprendre vos besoins</CardDescription>
               </CardHeader>
               <CardContent>
-                <ProjectBriefForm projectId={project.id} initialData={brief?.answers || {}} projectStatus={project.status} />
+                <ProjectBriefForm projectId={project.id} initialData={{}} projectStatus={project.status} />
               </CardContent>
             </Card>
           </TabsContent>

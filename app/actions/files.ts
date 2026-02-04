@@ -195,8 +195,8 @@ export async function uploadDeliverable(formData: FormData) {
     })
 
     if (dbError) {
-      errors.push(`${file.name}: Erreur base de données`)
-      continue
+      console.error('❌ uploadDeliverable dbError:', dbError)
+      return { error: dbError.message }
     }
 
     uploadedDeliverables.push(deliverableId)

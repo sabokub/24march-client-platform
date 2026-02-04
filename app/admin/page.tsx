@@ -41,6 +41,23 @@ export default async function AdminDashboardPage({
 
   const { data: projects } = await query
 
+  // Fetch owners for the projects (avoid embedding relations in the main query)
+  let ownersMap: Record<string, { name?: string; email?: string } | undefined> = {}
+  if (projects && projects.length > 0) {
+    const ownerIds = Array.from(new Set(projects.map((p: any) => p.owner_id).filter(Boolean)))
+    if (ownerIds.length > 0) {
+      const { data: owners } = await supabase
+        .from('profiles')
+        .select('id, name, email')
+        .in('id', ownerIds)
+
+      ownersMap = (owners || []).reduce((acc: any, o: any) => {
+        acc[o.id] = o
+        return acc
+      }, {})
+    }
+  }
+
   // Get stats
   const { count: totalProjects } = await supabase
     .from('projects')
@@ -160,7 +177,7 @@ export default async function AdminDashboardPage({
                   </thead>
                   <tbody>
                     {projects.map((project) => {
-                      const ownerData = project.owner as { name?: string; email?: string } | null
+                      const ownerData = (ownersMap as any)[project.owner_id] ?? null
                       return (
                         <tr key={project.id} className="border-b hover:bg-gray-50">
                           <td className="py-3 px-4">
@@ -171,7 +188,7 @@ export default async function AdminDashboardPage({
                             <p className="text-xs text-gray-500">{ownerData?.email}</p>
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-600">
-                            {project.room_type || '-'}
+                            {project.room_type ?? '-'}
                           </td>
                           <td className="py-3 px-4">
                             <Badge className={getStatusColor(project.status)}>

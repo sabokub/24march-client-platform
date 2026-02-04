@@ -54,7 +54,7 @@ export default async function AdminDashboardPage({
   })
 
   // Fetch owners for the projects (avoid embedding relations in the main query)
-  let ownersMap: Record<string, { name?: string; email?: string } | undefined> = {}
+  const ownersMap = new Map<string, { name?: string; email?: string }>()
   if (projects && projects.length > 0) {
     const ownerIds = Array.from(new Set(projects.map((p: any) => p.owner_id).filter(Boolean)))
     if (ownerIds.length > 0) {
@@ -63,10 +63,9 @@ export default async function AdminDashboardPage({
         .select('id, name, email')
         .in('id', ownerIds)
 
-      ownersMap = (owners || []).reduce((acc: any, o: any) => {
-        acc[o.id] = o
-        return acc
-      }, {})
+      ;(owners || []).forEach((o: any) => {
+        if (o && o.id) ownersMap.set(o.id, o)
+      })
     }
   }
 
@@ -195,7 +194,7 @@ export default async function AdminDashboardPage({
                   </thead>
                   <tbody>
                     {sortedProjects.map((project) => {
-                      const ownerData = (ownersMap as any)[project.owner_id] ?? null
+                      const ownerData = (ownersMap as Map<string, any>).get(project.owner_id) ?? null
                       return (
                         <tr key={project.id} className="border-b hover:bg-gray-50">
                           <td className="py-3 px-4">

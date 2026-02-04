@@ -42,13 +42,13 @@ export async function signUp(formData: FormData): Promise<ActionResult> {
 
   // Create profile
   if (data.user) {
-    const { error: profileError } = await supabase.from('profiles').insert({
+    const { error: profileError } = await supabase.from('profiles').upsert({
       id: data.user.id,
       email,
       name,
       phone,
       role: 'client',
-    })
+    }, { onConflict: 'id' })
     if (profileError) {
       return { ok: false, message: profileError.message }
     }

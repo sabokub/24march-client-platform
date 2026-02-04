@@ -242,7 +242,7 @@ export async function getAllProjects(status?: string) {
     .select(`*, owner:profiles(name, email)`)
     .order('created_at', { ascending: false })
 
-  if (status) query = query.eq('status', status)
+  if (status && status !== 'all') query = query.eq('status', status)
 
   const { data: projects, error } = await query
 

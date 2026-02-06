@@ -83,7 +83,7 @@ CREATE TABLE deliverables (
 CREATE TABLE shopping_lists (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    created_by_admin UUID NOT NULL REFERENCES profiles(id),
+    created_by_admin BOOLEAN NOT NULL DEFAULT false,
     version INTEGER NOT NULL DEFAULT 1,
     status shopping_list_status NOT NULL DEFAULT 'draft',
     client_notes TEXT,

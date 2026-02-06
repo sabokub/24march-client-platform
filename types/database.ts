@@ -72,7 +72,7 @@ export interface Deliverable {
 export interface ShoppingList {
   id: string
   project_id: string
-  created_by_admin: string
+  created_by_admin: boolean
   version: number
   status: 'draft' | 'sent' | 'validated' | 'adjustment_requested'
   client_notes?: string | null

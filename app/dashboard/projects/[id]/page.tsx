@@ -54,7 +54,7 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
   if (!project) notFound()
 
   // ✅ Tables existantes: messages, deliverables
-  const [messagesRes, deliverablesRes] = await Promise.all([
+  const [messagesRes, deliverablesRes, shoppingListsRes] = await Promise.all([
     supabase
       .from('messages')
       .select('*')
@@ -65,19 +65,27 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
       .select('*')
       .eq('project_id', project.id)
       .order('created_at', { ascending: false }),
+    supabase
+      .from('shopping_lists')
+      .select('*, items:shopping_list_items(*)')
+      .eq('project_id', project.id)
+      .order('created_at', { ascending: false })
+      .limit(1),
   ])
 
   const messages = messagesRes.data || []
   const deliverables = deliverablesRes.data || []
+  const shoppingListsData = shoppingListsRes.data || []
+  const latestShoppingList = shoppingListsData[0] ?? null
 
   if (messagesRes.error) console.error('[ProjectDetail] messages error:', messagesRes.error.message)
   if (deliverablesRes.error) console.error('[ProjectDetail] deliverables error:', deliverablesRes.error.message)
+  if (shoppingListsRes.error) console.error('[ProjectDetail] shopping_lists error:', shoppingListsRes.error.message)
 
   // ✅ Ces tables n’existent pas dans ton schéma actuel -> on passe des valeurs vides
   const assets: any[] = []
   const deliverablesList = deliverables || []
-  const shoppingLists: any[] = []
-  const latestShoppingList = null
+
 
   return (
     <div className="min-h-screen bg-gray-50">

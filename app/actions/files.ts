@@ -188,9 +188,6 @@ export async function uploadDeliverable(formData: FormData) {
       project_id: projectId,
       type: deliverableType,
       storage_path: storagePath,
-      file_name: file.name,
-      file_size: file.size,
-      notes,
     })
 
     if (dbError) {

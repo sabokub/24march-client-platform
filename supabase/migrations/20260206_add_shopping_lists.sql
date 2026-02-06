@@ -10,6 +10,10 @@ BEGIN;
 CREATE TABLE public.shopping_lists (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
+    created_by_admin BOOLEAN NOT NULL DEFAULT false,
+    version INTEGER NOT NULL DEFAULT 1,
+    status TEXT NOT NULL DEFAULT 'draft',
+    client_notes TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     title TEXT,

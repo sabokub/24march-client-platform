@@ -40,12 +40,13 @@ export async function createShoppingList(projectId: string) {
   const { error } = await supabase.from('shopping_lists').insert({
     id: listId,
     project_id: projectId,
-    created_by_admin: user.id,
+    created_by_admin: true,
     version: newVersion,
     status: 'draft',
   })
 
   if (error) {
+    console.error('❌ createShoppingList dbError:', error)
     return { error: error.message }
   }
 

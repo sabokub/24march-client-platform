@@ -185,10 +185,11 @@ export async function uploadDeliverable(formData: FormData) {
     }
 
     const { error: dbError } = await supabase.from('deliverables').insert({
-      id: deliverableId,
       project_id: projectId,
       type: deliverableType,
       storage_path: storagePath,
+      file_name: file.name,
+      file_size: file.size,
       notes,
     })
 

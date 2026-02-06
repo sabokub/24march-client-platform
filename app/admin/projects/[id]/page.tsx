@@ -100,7 +100,6 @@ export default async function AdminProjectDetailPage({
     { data: briefs },
     { data: assets },
     { data: deliverables },
-    { data: shoppingLists },
   ] = await Promise.all([
     clientId
       ? supabase.from('profiles').select('id, name, email, phone').eq('id', clientId).single()
@@ -120,19 +119,13 @@ export default async function AdminProjectDetailPage({
       .select('*')
       .eq('project_id', projectRow.id)
       .order('created_at', { ascending: false }),
-    supabase
-      .from('shopping_lists')
-      .select('*, items:shopping_list_items(*)')
-      .eq('project_id', projectRow.id)
-      .order('created_at', { ascending: true }),
   ])
 
   const clientData: ClientProfile | null = clientError ? null : (client as any)
   const brief = (briefs as any)?.[0] ?? null
   const safeAssets = (assets as any) ?? []
   const safeDeliverables = (deliverables as any) ?? []
-  const safeShoppingLists = (shoppingLists as any) ?? []
-  const latestShoppingList = safeShoppingLists[safeShoppingLists.length - 1] ?? null
+  const latestShoppingList = null
 
   return (
     <div className="min-h-screen bg-gray-50">

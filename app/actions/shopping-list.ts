@@ -361,6 +361,7 @@ export async function importShoppingListItems(
     price?: string
     url?: string
     image_url?: string
+    image_storage_path?: string
     vendor?: string
     quantity?: string | number
     notes?: string
@@ -392,6 +393,7 @@ export async function importShoppingListItems(
     const vendor = (row.vendor || '').trim()
     const url = (row.url || '').trim()
     const imageUrl = (row.image_url || '').trim()
+    const imageStoragePath = (row.image_storage_path || '').trim()
     const notes = (row.notes || '').trim()
 
     if (!name) {
@@ -431,6 +433,7 @@ export async function importShoppingListItems(
       price: priceValue,
       url: url || undefined,
       image_url: imageUrl || undefined,
+      image_storage_path: imageStoragePath || undefined,
       notes: combinedNotes,
       quantity: quantityValue,
     })

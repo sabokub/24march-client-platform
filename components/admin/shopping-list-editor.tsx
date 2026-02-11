@@ -187,7 +187,8 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
     }
 
     setIsImporting(true)
-    const result = await importShoppingListItems(shoppingList.id, rows)
+    const rehostedRows = await rehostImportRows(rows)
+    const result = await importShoppingListItems(shoppingList.id, rehostedRows)
     if (!result.ok) {
       toast.error(result.errors?.[0]?.message || 'Erreur import')
     } else {
@@ -202,6 +203,32 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
     }
 
     setIsImporting(false)
+  }
+
+  const rehostImportRows = async (rows: Array<Record<string, string>>) => {
+    const limit = 4
+    let index = 0
+    const results = rows.map((row) => ({ ...row }))
+
+    const worker = async () => {
+      while (index < rows.length) {
+        const current = index
+        index += 1
+
+        const imageUrl = (rows[current].image_url || '').trim()
+        if (!imageUrl) continue
+
+        const rehost = await rehostShoppingImage(imageUrl)
+        if (rehost.ok && rehost.storage_path) {
+          results[current].image_storage_path = rehost.storage_path
+        }
+      }
+    }
+
+    const workers = Array.from({ length: Math.min(limit, rows.length) }, () => worker())
+    await Promise.all(workers)
+
+    return results
   }
 
   const getStatusBadge = () => {

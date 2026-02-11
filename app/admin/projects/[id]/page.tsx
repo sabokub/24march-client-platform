@@ -120,12 +120,12 @@ export default async function AdminProjectDetailPage({
       .select('*')
       .eq('project_id', projectRow.id)
       .order('created_at', { ascending: false }),
-supabase
-  .from('shopping_lists')
-  .select('*, items:shopping_list_items(*)')
-  .eq('project_id', projectRow.id)
-  .order('created_at', { ascending: true })
-])
+    supabase
+      .from('shopping_lists')
+      .select('*, items:shopping_list_items(*)')
+      .eq('project_id', projectRow.id)
+      .order('created_at', { ascending: true })
+  ])
 
 
   const clientData: ClientProfile | null = clientError ? null : (client as any)
@@ -150,7 +150,17 @@ supabase
       signed_url: data?.signedUrl ?? null,
     }
   }))
-  const safeShoppingLists = (shoppingLists as any) ?? []
+  const safeShoppingLists = await Promise.all(((shoppingLists as any) ?? []).map(async (list: any) => {
+    const items = await Promise.all(((list.items as any[]) || []).map(async (item: any) => {
+      if (!item.image_storage_path) return { ...item, signed_url: null }
+      const { data } = await supabase.storage
+        .from('shopping_images')
+        .createSignedUrl(item.image_storage_path, 60 * 60)
+      return { ...item, signed_url: data?.signedUrl ?? null }
+    }))
+
+    return { ...list, items }
+  }))
   const latestShoppingList = safeShoppingLists[safeShoppingLists.length - 1] ?? null
 
   return (

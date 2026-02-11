@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createShoppingList, addShoppingListItem, deleteShoppingListItem, sendShoppingList, importShoppingListItems } from '@/app/actions/shopping-list'
+import { createShoppingList, addShoppingListItem, deleteShoppingListItem, sendShoppingList, importShoppingListItems, fetchProductMeta, rehostShoppingImage } from '@/app/actions/shopping-list'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -24,6 +24,7 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
   const [isSending, setIsSending] = useState(false)
   const [isAddingItem, setIsAddingItem] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
+  const [isAutoFilling, setIsAutoFilling] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [bulkText, setBulkText] = useState('')
   const [csvRows, setCsvRows] = useState<Array<Record<string, string>>>([])
@@ -35,6 +36,7 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
     product_url: '',
     affiliate_url: '',
     image_url: '',
+    image_storage_path: '',
     category: '',
     notes: '',
   })
@@ -65,6 +67,7 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
     formData.append('product_url', newItem.product_url)
     formData.append('affiliate_url', newItem.affiliate_url)
     formData.append('image_url', newItem.image_url)
+    formData.append('image_storage_path', newItem.image_storage_path)
     formData.append('category', newItem.category)
     formData.append('notes', newItem.notes)
 
@@ -81,6 +84,7 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
         product_url: '',
         affiliate_url: '',
         image_url: '',
+        image_storage_path: '',
         category: '',
         notes: '',
       })
@@ -109,6 +113,39 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
       toast.success('Liste envoyée au client')
     }
     setIsSending(false)
+  }
+
+  const handleAutoFill = async () => {
+    if (!newItem.product_url.trim()) {
+      toast.error('URL produit requise')
+      return
+    }
+
+    setIsAutoFilling(true)
+    const meta = await fetchProductMeta(newItem.product_url)
+    if (!meta.ok) {
+      toast.error(meta.message || 'Erreur auto-remplissage')
+      setIsAutoFilling(false)
+      return
+    }
+
+    const { name, vendor, price, image_url } = meta.data
+    setNewItem((prev) => ({
+      ...prev,
+      title: name || prev.title,
+      retailer: vendor || prev.retailer,
+      price_eur: price !== null && price !== undefined ? String(price) : prev.price_eur,
+      image_url: image_url || prev.image_url,
+    }))
+
+    if (image_url) {
+      const rehost = await rehostShoppingImage(image_url)
+      if (rehost.ok) {
+        setNewItem((prev) => ({ ...prev, image_storage_path: rehost.storage_path }))
+      }
+    }
+
+    setIsAutoFilling(false)
   }
 
   const parseRows = (raw: string) => {
@@ -210,13 +247,6 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
     return sum + price * qty
   }, 0)
 
-  console.log('[shopping] price types', items.map((item) => ({
-    price: (item as any).price ?? item.price_eur,
-    priceType: typeof ((item as any).price ?? item.price_eur),
-    qty: (item as any).quantity,
-    qtyType: typeof (item as any).quantity,
-  })))
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -307,6 +337,15 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
                 onChange={(e) => setNewItem({ ...newItem, product_url: e.target.value })}
                 placeholder="https://..."
               />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleAutoFill}
+                disabled={isAutoFilling}
+                className="mt-2"
+              >
+                {isAutoFilling ? 'Auto-remplissage...' : 'Auto-remplir'}
+              </Button>
             </div>
             <div>
               <Label>URL affiliée (optionnel)</Label>
@@ -402,9 +441,9 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
               key={item.id}
               className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg border"
             >
-              {item.image_url && !brokenImages[item.id] ? (
+              {((item as any).signed_url || item.image_url) && !brokenImages[item.id] ? (
                 <img
-                  src={item.image_url}
+                  src={(item as any).signed_url || item.image_url}
                   alt={item.title || (item as any).name}
                   className="w-20 h-20 object-cover rounded-lg"
                   onError={() => setBrokenImages((prev) => ({ ...prev, [item.id]: true }))}

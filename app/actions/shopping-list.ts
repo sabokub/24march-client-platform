@@ -100,6 +100,7 @@ export async function addShoppingListItem(formData: FormData) {
   }
 
   const listId = formData.get('shopping_list_id') as string
+  const imageStoragePath = (formData.get('image_storage_path') as string) || undefined
   const rawData = {
     title: formData.get('title') as string,
     retailer: formData.get('retailer') as string || undefined,
@@ -126,6 +127,7 @@ export async function addShoppingListItem(formData: FormData) {
     price: result.data.price_eur,
     url: result.data.product_url,
     image_url: result.data.image_url,
+    image_storage_path: imageStoragePath,
     notes: result.data.notes,
     quantity: 1,
   })
@@ -144,6 +146,7 @@ export async function addShoppingListItem(formData: FormData) {
           price: result.data.price_eur,
           url: result.data.product_url,
           image_url: result.data.image_url,
+          image_storage_path: imageStoragePath,
           notes: result.data.notes,
           quantity: 1,
         },
@@ -457,4 +460,142 @@ export async function importShoppingListItems(
   }
 
   return { ok: true, imported: items.length, errors }
+}
+
+export async function fetchProductMeta(productUrl: string) {
+  try {
+    const res = await fetch(productUrl, {
+      headers: {
+        'user-agent': 'Mozilla/5.0 (compatible; 24march-bot/1.0)'
+      }
+    })
+
+    if (!res.ok) {
+      console.error('[fetchProductMeta] fetch failed:', res.status, res.statusText)
+      return { ok: false, message: 'Fetch produit impossible' }
+    }
+
+    const html = await res.text()
+
+    const getMeta = (prop: string) => {
+      const re = new RegExp(`<meta[^>]+property=["']${prop}["'][^>]+content=["']([^"']+)["']`, 'i')
+      const match = html.match(re)
+      return match ? match[1].trim() : null
+    }
+
+    const getMetaName = (name: string) => {
+      const re = new RegExp(`<meta[^>]+name=["']${name}["'][^>]+content=["']([^"']+)["']`, 'i')
+      const match = html.match(re)
+      return match ? match[1].trim() : null
+    }
+
+    const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i)
+    const ogTitle = getMeta('og:title')
+    const ogImage = getMeta('og:image')
+    const ogSiteName = getMeta('og:site_name') || getMetaName('application-name')
+    const title = ogTitle || (titleMatch ? titleMatch[1].trim() : null)
+
+    let price: number | null = null
+    const scripts = html.match(/<script[^>]+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi) || []
+    for (const script of scripts) {
+      const jsonMatch = script.match(/<script[^>]*>([\s\S]*?)<\/script>/i)
+      if (!jsonMatch) continue
+      try {
+        const data = JSON.parse(jsonMatch[1])
+        const nodes = Array.isArray(data) ? data : [data]
+        for (const node of nodes) {
+          const type = node['@type'] || node['@type']?.[0]
+          if (type === 'Product' || (Array.isArray(type) && type.includes('Product'))) {
+            const offers = node.offers || {}
+            const offerList = Array.isArray(offers) ? offers : [offers]
+            for (const offer of offerList) {
+              if (offer && offer.price) {
+                const parsed = Number(String(offer.price).replace(',', '.'))
+                if (!Number.isNaN(parsed)) {
+                  price = parsed
+                  break
+                }
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[fetchProductMeta] json-ld parse error:', err)
+      }
+      if (price !== null) break
+    }
+
+    let vendor: string | null = null
+    if (ogSiteName) {
+      vendor = ogSiteName
+    } else {
+      try {
+        vendor = new URL(productUrl).hostname.replace('www.', '')
+      } catch {
+        vendor = null
+      }
+    }
+
+    return {
+      ok: true,
+      data: {
+        name: title,
+        vendor,
+        price,
+        image_url: ogImage,
+      }
+    }
+  } catch (err) {
+    console.error('[fetchProductMeta] error:', err)
+    return { ok: false, message: 'Erreur extraction meta' }
+  }
+}
+
+export async function rehostShoppingImage(imageUrl: string) {
+  const supabase = await createClient()
+  try {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 10000)
+    const res = await fetch(imageUrl, { signal: controller.signal })
+    clearTimeout(timeout)
+
+    if (!res.ok) {
+      console.error('[rehostShoppingImage] fetch failed:', res.status, res.statusText)
+      return { ok: false, message: 'Fetch image impossible' }
+    }
+
+    const contentType = res.headers.get('content-type') || ''
+    if (!contentType.startsWith('image/')) {
+      console.error('[rehostShoppingImage] invalid content-type:', contentType)
+      return { ok: false, message: 'Type image invalide' }
+    }
+
+    const ext = contentType.includes('png')
+      ? 'png'
+      : contentType.includes('webp')
+        ? 'webp'
+        : contentType.includes('gif')
+          ? 'gif'
+          : 'jpg'
+
+    const arrayBuffer = await res.arrayBuffer()
+    const storagePath = `${crypto.randomUUID()}.${ext}`
+
+    const { error } = await supabase.storage
+      .from('shopping_images')
+      .upload(storagePath, Buffer.from(arrayBuffer), {
+        contentType,
+        upsert: false,
+      })
+
+    if (error) {
+      console.error('[rehostShoppingImage] upload error:', error)
+      return { ok: false, message: error.message }
+    }
+
+    return { ok: true, storage_path: storagePath }
+  } catch (err) {
+    console.error('[rehostShoppingImage] error:', err)
+    return { ok: false, message: 'Erreur rehost image' }
+  }
 }

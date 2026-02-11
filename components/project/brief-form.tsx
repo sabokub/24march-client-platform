@@ -139,14 +139,11 @@ export function ProjectBriefForm({ projectId, initialData, projectStatus }: Proj
   const handleSubmit = async () => {
     setIsSubmitting(true)
     
-    // First save
     const formData = new FormData()
     formData.append('project_id', projectId)
     formData.append('answers', JSON.stringify(answers))
-    await saveBrief(formData)
     
-    // Then submit
-    const result = await submitBrief(projectId)
+    const result = await submitBrief(formData)
     
     if (result.error) {
       toast.error(result.error)

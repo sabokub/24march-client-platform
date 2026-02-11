@@ -164,11 +164,40 @@ export async function saveBrief(formData: FormData) {
   return { success: true }
 }
 
-export async function submitBrief(projectId: string) {
+export async function submitBrief(formData: FormData) {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autorisé' }
+
+  const projectId = formData.get('project_id') as string
+  const answersRaw = formData.get('answers') as string
+
+  let answers: Record<string, any>
+  try {
+    answers = JSON.parse(answersRaw)
+  } catch {
+    return { error: 'Format de données invalide' }
+  }
+
+  const result = projectBriefSchema.safeParse({ project_id: projectId, answers })
+  if (!result.success) return { error: result.error.errors[0].message }
+
+  const { data: project } = await supabase
+    .from('projects')
+    .select('owner_id')
+    .eq('id', projectId)
+    .single()
+
+  if (!project || project.owner_id !== user.id) {
+    return { error: 'Projet non trouvé' }
+  }
+
+  const { error: briefError } = await supabase
+    .from('project_briefs')
+    .upsert({ project_id: projectId, answers }, { onConflict: 'project_id' })
+
+  if (briefError) return { error: briefError.message }
 
   const { error } = await supabase
     .from('projects')

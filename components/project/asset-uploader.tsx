@@ -10,7 +10,7 @@ import type { Asset, AssetType } from '@/types/database'
 
 interface AssetUploaderProps {
   projectId: string
-  assets: Asset[]
+  assets: Array<Asset & { public_url?: string | null }>
 }
 
 export function AssetUploader({ projectId, assets }: AssetUploaderProps) {
@@ -132,11 +132,19 @@ export function AssetUploader({ projectId, assets }: AssetUploaderProps) {
                   className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <Icon className="w-8 h-8 text-gray-400 flex-shrink-0" />
+                    {asset.public_url ? (
+                      <img
+                        src={asset.public_url}
+                        alt=""
+                        className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <Icon className="w-8 h-8 text-gray-400 flex-shrink-0" />
+                    )}
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{asset.file_name}</p>
                       <p className="text-xs text-gray-500">
-                        {asset.type} • {(asset.file_size / 1024).toFixed(0)} KB
+                        {asset.type}
                       </p>
                     </div>
                   </div>

@@ -83,6 +83,13 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
   const shoppingListsData = shoppingListsRes.data || []
   const latestShoppingList = shoppingListsData[0] ?? null
   const assets = assetsRes.data || []
+  const safeAssets = assets.map((asset: any) => {
+    const { data } = supabase.storage.from('assets').getPublicUrl(asset.storage_path)
+    return {
+      ...asset,
+      public_url: data.publicUrl,
+    }
+  })
 
   // Debug logs for assets
   console.log('[ProjectDetail] Assets fetch result:', {
@@ -189,7 +196,7 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
                 <CardDescription>Téléversez des photos de la pièce actuelle et/ou des plans</CardDescription>
               </CardHeader>
               <CardContent>
-                <AssetUploader projectId={project.id} assets={assets} />
+                <AssetUploader projectId={project.id} assets={safeAssets} />
               </CardContent>
             </Card>
           </TabsContent>

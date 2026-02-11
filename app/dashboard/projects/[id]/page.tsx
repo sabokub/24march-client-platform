@@ -83,13 +83,16 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
   const shoppingListsData = shoppingListsRes.data || []
   const latestShoppingList = shoppingListsData[0] ?? null
   const assets = assetsRes.data || []
-  const safeAssets = assets.map((asset: any) => {
-    const { data } = supabase.storage.from('assets').getPublicUrl(asset.storage_path)
+  const safeAssets = await Promise.all(assets.map(async (asset: any) => {
+    const { data } = await supabase.storage
+      .from('assets')
+      .createSignedUrl(asset.storage_path, 60 * 60)
+
     return {
       ...asset,
-      public_url: data.publicUrl,
+      public_url: data?.signedUrl ?? null,
     }
-  })
+  }))
 
   // Debug logs for assets
   console.log('[ProjectDetail] Assets fetch result:', {

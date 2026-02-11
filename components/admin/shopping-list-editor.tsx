@@ -147,7 +147,7 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
     if (image_url) {
       const rehost = await rehostShoppingImage(image_url)
       if (rehost.ok) {
-        setNewItem((prev) => ({ ...prev, image_storage_path: rehost.storage_path }))
+        setNewItem((prev) => ({ ...prev, image_storage_path: rehost.storage_path ?? '' }))
       }
     }
 

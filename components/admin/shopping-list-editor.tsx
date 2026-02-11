@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Plus, Trash2, Send, ShoppingBag, Loader2, AlertCircle, ExternalLink } from 'lucide-react'
+import { Plus, Trash2, Send, ShoppingBag, Loader2, AlertCircle, ExternalLink, Image } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatPrice } from '@/lib/utils'
 import type { ShoppingList, ShoppingListItem } from '@/types/database'
@@ -27,6 +27,7 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
   const [dialogOpen, setDialogOpen] = useState(false)
   const [bulkText, setBulkText] = useState('')
   const [csvRows, setCsvRows] = useState<Array<Record<string, string>>>([])
+  const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({})
   const [newItem, setNewItem] = useState({
     title: '',
     retailer: '',
@@ -203,7 +204,18 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
     const tb = new Date(b.created_at).getTime() || 0
     return ta - tb
   }) || []
-  const total = items.reduce((sum, item) => sum + (item.price_eur || 0), 0)
+  const total = items.reduce((sum, item) => {
+    const price = Number((item as any).price ?? item.price_eur ?? 0)
+    const qty = Number((item as any).quantity ?? 1)
+    return sum + price * qty
+  }, 0)
+
+  console.log('[shopping] price types', items.map((item) => ({
+    price: (item as any).price ?? item.price_eur,
+    priceType: typeof ((item as any).price ?? item.price_eur),
+    qty: (item as any).quantity,
+    qtyType: typeof (item as any).quantity,
+  })))
 
   return (
     <div className="space-y-6">
@@ -214,7 +226,7 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
           {getStatusBadge()}
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-lg font-bold text-amber-600">Total: {formatPrice(total)}</span>
+          <span className="text-lg font-bold text-amber-600">Total: {total.toFixed(2)}</span>
           {shoppingList.status === 'draft' && items.length > 0 && (
             <Button
               onClick={handleSendList}
@@ -390,12 +402,17 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
               key={item.id}
               className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg border"
             >
-              {item.image_url && (
+              {item.image_url && !brokenImages[item.id] ? (
                 <img
                   src={item.image_url}
                   alt={item.title || (item as any).name}
                   className="w-20 h-20 object-cover rounded-lg"
+                  onError={() => setBrokenImages((prev) => ({ ...prev, [item.id]: true }))}
                 />
+              ) : (
+                <div className="w-20 h-20 rounded-lg bg-gray-100 flex items-center justify-center">
+                  <Image className="w-6 h-6 text-gray-400" />
+                </div>
               )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-4">

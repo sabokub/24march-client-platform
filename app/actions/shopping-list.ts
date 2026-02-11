@@ -109,7 +109,6 @@ export async function addShoppingListItem(formData: FormData) {
     image_url: formData.get('image_url') as string || undefined,
     category: formData.get('category') as string || undefined,
     notes: formData.get('notes') as string || undefined,
-    position: parseInt(formData.get('position') as string) || 0,
   }
 
   const result = shoppingListItemSchema.safeParse(rawData)
@@ -369,11 +368,6 @@ export async function importShoppingListItems(
     return { ok: false, imported: 0, errors: [{ row: 0, message: 'Reserve aux administrateurs' }] }
   }
 
-  const { count: existingCount } = await supabase
-    .from('shopping_list_items')
-    .select('*', { count: 'exact', head: true })
-    .eq('shopping_list_id', listId)
-
   const items: any[] = []
   const errors: Array<{ row: number; message: string }> = []
 
@@ -423,7 +417,6 @@ export async function importShoppingListItems(
       product_url: url || undefined,
       image_url: imageUrl || undefined,
       notes: combinedNotes,
-      position: (existingCount || 0) + items.length,
     })
   })
 

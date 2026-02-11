@@ -67,7 +67,6 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
     formData.append('image_url', newItem.image_url)
     formData.append('category', newItem.category)
     formData.append('notes', newItem.notes)
-    formData.append('position', String(shoppingList.items?.length || 0))
 
     const result = await addShoppingListItem(formData)
     
@@ -200,7 +199,11 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
     )
   }
 
-  const items = shoppingList.items?.sort((a, b) => a.position - b.position) || []
+  const items = shoppingList.items?.sort((a, b) => {
+    const ta = new Date(a.created_at).getTime() || 0
+    const tb = new Date(b.created_at).getTime() || 0
+    return ta - tb
+  }) || []
   const total = items.reduce((sum, item) => sum + (item.price_eur || 0), 0)
 
   return (

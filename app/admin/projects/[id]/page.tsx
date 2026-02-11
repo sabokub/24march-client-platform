@@ -130,7 +130,13 @@ supabase
 
   const clientData: ClientProfile | null = clientError ? null : (client as any)
   const brief = (briefs as any)?.[0] ?? null
-  const safeAssets = (assets as any) ?? []
+  const safeAssets = ((assets as any) ?? []).map((asset: any) => {
+    const { data } = supabase.storage.from('assets').getPublicUrl(asset.storage_path)
+    return {
+      ...asset,
+      public_url: data.publicUrl,
+    }
+  })
   const safeDeliverables = (deliverables as any) ?? []
   const safeShoppingLists = (shoppingLists as any) ?? []
   const latestShoppingList = safeShoppingLists[safeShoppingLists.length - 1] ?? null

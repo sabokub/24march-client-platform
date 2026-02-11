@@ -9,7 +9,7 @@ import { formatDate } from '@/lib/utils'
 import type { Asset, AssetType } from '@/types/database'
 
 interface AssetViewerProps {
-  assets: Asset[]
+  assets: Array<Asset & { public_url?: string | null }>
 }
 
 export function AssetViewer({ assets }: AssetViewerProps) {
@@ -60,15 +60,21 @@ export function AssetViewer({ assets }: AssetViewerProps) {
             className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border"
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Icon className="w-6 h-6 text-blue-600" />
-              </div>
+              {asset.public_url ? (
+                <img
+                  src={asset.public_url}
+                  alt=""
+                  className="w-12 h-12 rounded-lg object-cover"
+                />
+              ) : (
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Icon className="w-6 h-6 text-blue-600" />
+                </div>
+              )}
               <div>
                 <p className="font-medium truncate max-w-[200px]">{asset.file_name}</p>
                 <div className="flex items-center gap-2 text-sm text-gray-500">
                   <span>{getTypeLabel(asset.type)}</span>
-                  <span>•</span>
-                  <span>{(asset.file_size / 1024).toFixed(0)} KB</span>
                 </div>
               </div>
             </div>

@@ -53,8 +53,8 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
   }
   if (!project) notFound()
 
-  // ✅ Tables existantes: messages, deliverables
-  const [messagesRes, deliverablesRes, shoppingListsRes] = await Promise.all([
+  // ✅ Tables existantes: messages, deliverables, assets
+  const [messagesRes, deliverablesRes, shoppingListsRes, assetsRes] = await Promise.all([
     supabase
       .from('messages')
       .select('*')
@@ -71,19 +71,40 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
       .eq('project_id', project.id)
       .order('created_at', { ascending: false })
       .limit(1),
+    supabase
+      .from('assets')
+      .select('*')
+      .eq('project_id', project.id)
+      .order('created_at', { ascending: false }),
   ])
 
   const messages = messagesRes.data || []
   const deliverables = deliverablesRes.data || []
   const shoppingListsData = shoppingListsRes.data || []
   const latestShoppingList = shoppingListsData[0] ?? null
+  const assets = assetsRes.data || []
+
+  // Debug logs for assets
+  console.log('[ProjectDetail] Assets fetch result:', {
+    projectId: project.id,
+    user_id: user.id,
+    assetsCount: assets?.length || 0,
+    assetsError: assetsRes.error ? { code: assetsRes.error.code, message: assetsRes.error.message, hint: assetsRes.error.hint } : null,
+    assets: assets,
+  })
 
   if (messagesRes.error) console.error('[ProjectDetail] messages error:', messagesRes.error.message)
   if (deliverablesRes.error) console.error('[ProjectDetail] deliverables error:', deliverablesRes.error.message)
   if (shoppingListsRes.error) console.error('[ProjectDetail] shopping_lists error:', shoppingListsRes.error.message)
+  if (assetsRes.error) console.error('[ProjectDetail] assets error:', assetsRes.error.message)
 
-  // ✅ Ces tables n’existent pas dans ton schéma actuel -> on passe des valeurs vides
-  const assets: any[] = []
+  // ✅ Test: Query all assets without filters (to check RLS vs auth session)
+  const testAllAssetsRes = await supabase.from('assets').select('*')
+  console.log('[ProjectDetail] TEST - All assets (no filters):', {
+    count: testAllAssetsRes.data?.length || 0,
+    error: testAllAssetsRes.error ? { code: testAllAssetsRes.error.code, message: testAllAssetsRes.error.message } : null,
+  })
+
   const deliverablesList = deliverables || []
 
 

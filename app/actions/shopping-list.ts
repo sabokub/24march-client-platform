@@ -121,7 +121,13 @@ export async function addShoppingListItem(formData: FormData) {
   const { error } = await supabase.from('shopping_list_items').insert({
     id: itemId,
     shopping_list_id: listId,
-    ...result.data,
+    name: result.data.title,
+    vendor: result.data.retailer,
+    price: result.data.price_eur,
+    url: result.data.product_url,
+    image_url: result.data.image_url,
+    notes: result.data.notes,
+    quantity: 1,
   })
 
   if (error) {
@@ -133,7 +139,13 @@ export async function addShoppingListItem(formData: FormData) {
         payload: {
           id: itemId,
           shopping_list_id: listId,
-          ...result.data,
+          name: result.data.title,
+          vendor: result.data.retailer,
+          price: result.data.price_eur,
+          url: result.data.product_url,
+          image_url: result.data.image_url,
+          notes: result.data.notes,
+          quantity: 1,
         },
         user_id: user.id,
       })
@@ -411,12 +423,13 @@ export async function importShoppingListItems(
     items.push({
       id: uuidv4(),
       shopping_list_id: listId,
-      title: name,
-      retailer: vendor || undefined,
-      price_eur: priceValue,
-      product_url: url || undefined,
+      name,
+      vendor: vendor || undefined,
+      price: priceValue,
+      url: url || undefined,
       image_url: imageUrl || undefined,
       notes: combinedNotes,
+      quantity: quantityValue,
     })
   })
 

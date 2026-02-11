@@ -1,5 +1,4 @@
 'use client'
-
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createShoppingList, addShoppingListItem, deleteShoppingListItem, sendShoppingList, importShoppingListItems } from '@/app/actions/shopping-list'
@@ -394,16 +393,16 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
               {item.image_url && (
                 <img
                   src={item.image_url}
-                  alt={item.title}
+                  alt={item.title || (item as any).name}
                   className="w-20 h-20 object-cover rounded-lg"
                 />
               )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h5 className="font-medium">{item.title}</h5>
-                    {item.retailer && (
-                      <p className="text-sm text-gray-500">{item.retailer}</p>
+                    <h5 className="font-medium">{item.title || (item as any).name}</h5>
+                    {(item.retailer || (item as any).vendor) && (
+                      <p className="text-sm text-gray-500">{item.retailer || (item as any).vendor}</p>
                     )}
                     {item.category && (
                       <Badge variant="secondary" className="mt-1 text-xs">
@@ -415,14 +414,14 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
                     )}
                   </div>
                   <div className="text-right flex-shrink-0">
-                    {item.price_eur && (
+                    {(item.price_eur || (item as any).price) && (
                       <p className="font-semibold text-amber-600">
-                        {formatPrice(item.price_eur)}
+                        {formatPrice((item.price_eur || (item as any).price) as number)}
                       </p>
                     )}
-                    {item.product_url && (
+                    {(item.product_url || (item as any).url) && (
                       <a
-                        href={item.product_url}
+                        href={item.product_url || (item as any).url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline mt-1"

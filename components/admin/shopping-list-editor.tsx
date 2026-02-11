@@ -58,7 +58,7 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
 
     setIsAddingItem(true)
     const formData = new FormData()
-    formData.append('list_id', shoppingList.id)
+    formData.append('shopping_list_id', shoppingList.id)
     formData.append('title', newItem.title)
     formData.append('retailer', newItem.retailer)
     formData.append('price_eur', newItem.price_eur)

@@ -99,7 +99,7 @@ export async function addShoppingListItem(formData: FormData) {
     return { error: 'Réservé aux administrateurs' }
   }
 
-  const listId = formData.get('list_id') as string
+  const listId = formData.get('shopping_list_id') as string
   const rawData = {
     title: formData.get('title') as string,
     retailer: formData.get('retailer') as string || undefined,
@@ -121,7 +121,7 @@ export async function addShoppingListItem(formData: FormData) {
 
   const { error } = await supabase.from('shopping_list_items').insert({
     id: itemId,
-    list_id: listId,
+    shopping_list_id: listId,
     ...result.data,
   })
 
@@ -133,7 +133,7 @@ export async function addShoppingListItem(formData: FormData) {
         hint: error.hint,
         payload: {
           id: itemId,
-          list_id: listId,
+          shopping_list_id: listId,
           ...result.data,
         },
         user_id: user.id,
@@ -372,7 +372,7 @@ export async function importShoppingListItems(
   const { count: existingCount } = await supabase
     .from('shopping_list_items')
     .select('*', { count: 'exact', head: true })
-    .eq('list_id', listId)
+    .eq('shopping_list_id', listId)
 
   const items: any[] = []
   const errors: Array<{ row: number; message: string }> = []
@@ -416,7 +416,7 @@ export async function importShoppingListItems(
 
     items.push({
       id: uuidv4(),
-      list_id: listId,
+      shopping_list_id: listId,
       title: name,
       retailer: vendor || undefined,
       price_eur: priceValue,

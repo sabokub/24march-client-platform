@@ -129,7 +129,13 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
       return
     }
 
-    const { name, vendor, price, image_url } = meta.data
+    const data = meta?.data
+    if (!data) {
+      setIsAutoFilling(false)
+      return
+    }
+
+    const { name, vendor, price, image_url } = data
     setNewItem((prev) => ({
       ...prev,
       title: name || prev.title,

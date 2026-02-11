@@ -37,18 +37,42 @@ export async function createShoppingList(projectId: string) {
   const newVersion = (existing?.version || 0) + 1
   const listId = uuidv4()
 
-  const { error } = await supabase.from('shopping_lists').insert({
+  const payload = {
     id: listId,
     project_id: projectId,
     created_by_admin: true,
     version: newVersion,
     status: 'draft',
+  }
+
+  console.log('[createShoppingList] Inserting shopping list:', {
+    payload,
+    payloadTypes: {
+      id: typeof payload.id,
+      project_id: typeof payload.project_id,
+      created_by_admin: typeof payload.created_by_admin,
+      version: typeof payload.version,
+      status: typeof payload.status,
+    },
+    admin_user_id: user.id,
   })
 
+  const { error, data } = await supabase.from('shopping_lists').insert(payload).select()
+
   if (error) {
-    console.error('❌ createShoppingList dbError:', error)
+    console.error('[createShoppingList] ❌ Database error:', {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      payload,
+      user_id: user.id,
+      projectId,
+    })
     return { error: error.message }
   }
+
+  console.log('[createShoppingList] ✅ Success:', { data, listId })
 
   await logAudit('shopping_list.create', user.id, projectId, { listId, version: newVersion })
 
@@ -102,7 +126,19 @@ export async function addShoppingListItem(formData: FormData) {
   })
 
   if (error) {
-    return { error: error.message }
+      console.error('[addShoppingListItem] ❌ Database error:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        payload: {
+          id: itemId,
+          list_id: listId,
+          ...result.data,
+        },
+        user_id: user.id,
+      })
+      return { error: error.message }
   }
 
   // Get project ID for audit
@@ -212,7 +248,15 @@ export async function sendShoppingList(listId: string) {
     .single()
 
   if (error) {
-    return { error: error.message }
+      console.error('[sendShoppingList] ❌ Database error:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        listId,
+        user_id: user.id,
+      })
+      return { error: error.message }
   }
 
   await logAudit('shopping_list.update', user.id, list.project_id, { action: 'send', listId })

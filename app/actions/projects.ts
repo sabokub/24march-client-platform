@@ -43,15 +43,23 @@ export async function createProject(formData: FormData): Promise<ActionResult<{ 
     room_type: result.data.room_type,
   }
 
+  console.log('[createProject] Inserting payload:', { payload, payloadTypes: { id: typeof payload.id, owner_id: typeof payload.owner_id, status: typeof payload.status, title: typeof payload.title, room_type: typeof payload.room_type } })
+
   const { error } = await supabase.from('projects').insert(payload)
 
   if (error) {
-    console.error('❌ createProject error:', error)
-    console.error('📦 payload envoyé:', payload)
+    console.error('❌ [createProject] Database error:', {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      payload,
+      user_id: user.id,
+    })
     return { ok: false, message: error.message }
   }
 
-  await logAudit('project.create', user.id, projectId, { title: result.data.title })
+  console.log('[createProject] ✅ Success, project created:', { projectId, title: result.data.title })
 
   // refresh dashboard list
   revalidatePath('/dashboard')

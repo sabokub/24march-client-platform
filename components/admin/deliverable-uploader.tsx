@@ -166,9 +166,19 @@ export function AdminDeliverableUploader({ projectId, deliverables }: AdminDeliv
                 className="flex items-center justify-between p-4 bg-white rounded-lg border"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-                    <Icon className="w-6 h-6 text-amber-600" />
-                  </div>
+                  {deliverable.signed_url ? (
+                    <a href={deliverable.signed_url} target="_blank" rel="noreferrer">
+                      <img
+                        src={deliverable.signed_url}
+                        alt=""
+                        className="w-12 h-12 object-cover rounded-lg"
+                      />
+                    </a>
+                  ) : (
+                    <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                      <Icon className="w-6 h-6 text-amber-600" />
+                    </div>
+                  )}
                   <div>
                     <p className="font-medium">{deliverable.file_name}</p>
                     <div className="flex items-center gap-2 text-sm text-gray-500">

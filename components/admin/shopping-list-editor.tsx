@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { createShoppingList, addShoppingListItem, deleteShoppingListItem, sendShoppingList } from '@/app/actions/shopping-list'
+import { useRouter } from 'next/navigation'
+import { createShoppingList, addShoppingListItem, deleteShoppingListItem, sendShoppingList, importShoppingListItems } from '@/app/actions/shopping-list'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -19,10 +20,14 @@ interface AdminShoppingListEditorProps {
 }
 
 export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppingListEditorProps) {
+  const router = useRouter()
   const [isCreating, setIsCreating] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [isAddingItem, setIsAddingItem] = useState(false)
+  const [isImporting, setIsImporting] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [bulkText, setBulkText] = useState('')
+  const [csvRows, setCsvRows] = useState<Array<Record<string, string>>>([])
   const [newItem, setNewItem] = useState({
     title: '',
     retailer: '',
@@ -105,6 +110,56 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
       toast.success('Liste envoyée au client')
     }
     setIsSending(false)
+  }
+
+  const parseRows = (raw: string) => {
+    const lines = raw
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+
+    if (lines.length === 0) return []
+
+    return lines.map((line) => {
+      const delimiter = line.includes(';') ? ';' : ','
+      const parts = line.split(delimiter).map((part) => part.trim())
+      const [name, price, url, image_url, vendor, quantity, notes] = parts
+      return { name, price, url, image_url, vendor, quantity, notes }
+    })
+  }
+
+  const handleCsvChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const text = await file.text()
+    const rows = parseRows(text)
+    setCsvRows(rows)
+  }
+
+  const handleImport = async (rows: Array<Record<string, string>>) => {
+    if (!shoppingList) return
+    if (rows.length === 0) {
+      toast.error('Aucune ligne valide')
+      return
+    }
+
+    setIsImporting(true)
+    const result = await importShoppingListItems(shoppingList.id, rows)
+    if (!result.ok) {
+      toast.error(result.errors?.[0]?.message || 'Erreur import')
+    } else {
+      toast.success(`${result.imported} produit(s) importes`)
+      router.refresh()
+      setBulkText('')
+      setCsvRows([])
+    }
+
+    if (result.errors && result.errors.length > 0) {
+      result.errors.slice(0, 3).forEach((err) => toast.error(`Ligne ${err.row}: ${err.message}`))
+    }
+
+    setIsImporting(false)
   }
 
   const getStatusBadge = () => {
@@ -290,6 +345,40 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Import section */}
+      <div className="border rounded-lg p-4 bg-gray-50 space-y-3">
+        <div className="flex items-center gap-3">
+          <Label>Importer CSV</Label>
+          <input type="file" accept=".csv,text/csv" onChange={handleCsvChange} />
+          <Button
+            variant="outline"
+            onClick={() => handleImport(csvRows)}
+            disabled={isImporting || csvRows.length === 0}
+          >
+            Importer
+          </Button>
+        </div>
+        {csvRows.length > 0 && (
+          <p className="text-sm text-gray-500">{csvRows.length} ligne(s) detectee(s)</p>
+        )}
+        <div className="space-y-2">
+          <Label>Coller en masse</Label>
+          <Textarea
+            value={bulkText}
+            onChange={(e) => setBulkText(e.target.value)}
+            placeholder="name;price;url;image_url;vendor;quantity;notes"
+            rows={4}
+          />
+          <Button
+            variant="outline"
+            onClick={() => handleImport(parseRows(bulkText))}
+            disabled={isImporting || bulkText.trim() === ''}
+          >
+            Importer
+          </Button>
+        </div>
+      </div>
 
       {/* Items list */}
       {items.length > 0 ? (

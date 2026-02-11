@@ -339,3 +339,116 @@ export async function requestAdjustment(listId: string, notes: string) {
   revalidatePath(`/admin/projects/${list.project_id}`)
   return { success: true }
 }
+
+export async function importShoppingListItems(
+  listId: string,
+  rows: Array<{
+    name?: string
+    price?: string
+    url?: string
+    image_url?: string
+    vendor?: string
+    quantity?: string | number
+    notes?: string
+  }>
+) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { ok: false, imported: 0, errors: [{ row: 0, message: 'Non autorise' }] }
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile || profile.role !== 'admin') {
+    return { ok: false, imported: 0, errors: [{ row: 0, message: 'Reserve aux administrateurs' }] }
+  }
+
+  const { count: existingCount } = await supabase
+    .from('shopping_list_items')
+    .select('*', { count: 'exact', head: true })
+    .eq('list_id', listId)
+
+  const items: any[] = []
+  const errors: Array<{ row: number; message: string }> = []
+
+  rows.forEach((row, index) => {
+    const rowNumber = index + 1
+    const name = (row.name || '').trim()
+    const vendor = (row.vendor || '').trim()
+    const url = (row.url || '').trim()
+    const imageUrl = (row.image_url || '').trim()
+    const notes = (row.notes || '').trim()
+
+    if (!name) {
+      errors.push({ row: rowNumber, message: 'Nom requis' })
+      return
+    }
+
+    let priceValue: number | undefined
+    if (row.price !== undefined && row.price !== null && String(row.price).trim() !== '') {
+      const normalized = String(row.price).replace(',', '.').trim()
+      const parsed = Number(normalized)
+      if (Number.isNaN(parsed)) {
+        errors.push({ row: rowNumber, message: 'Prix invalide' })
+        return
+      }
+      priceValue = parsed
+    }
+
+    let quantityValue = 1
+    if (row.quantity !== undefined && row.quantity !== null && String(row.quantity).trim() !== '') {
+      const parsed = parseInt(String(row.quantity), 10)
+      if (Number.isNaN(parsed) || parsed < 1) {
+        errors.push({ row: rowNumber, message: 'Quantite invalide' })
+        return
+      }
+      quantityValue = parsed
+    }
+
+    const quantityNote = quantityValue > 1 ? `Quantite: ${quantityValue}` : ''
+    const combinedNotes = [notes, quantityNote].filter(Boolean).join(' | ') || undefined
+
+    items.push({
+      id: uuidv4(),
+      list_id: listId,
+      title: name,
+      retailer: vendor || undefined,
+      price_eur: priceValue,
+      product_url: url || undefined,
+      image_url: imageUrl || undefined,
+      notes: combinedNotes,
+      position: (existingCount || 0) + items.length,
+    })
+  })
+
+  if (items.length === 0) {
+    return { ok: false, imported: 0, errors: errors.length ? errors : [{ row: 0, message: 'Aucune ligne valide' }] }
+  }
+
+  const chunkSize = 100
+  for (let i = 0; i < items.length; i += chunkSize) {
+    const chunk = items.slice(i, i + chunkSize)
+    const { error } = await supabase.from('shopping_list_items').insert(chunk)
+    if (error) {
+      return { ok: false, imported: i, errors: [...errors, { row: 0, message: error.message }] }
+    }
+  }
+
+  const { data: list } = await supabase
+    .from('shopping_lists')
+    .select('project_id')
+    .eq('id', listId)
+    .single()
+
+  if (list?.project_id) {
+    revalidatePath(`/admin/projects/${list.project_id}`)
+  }
+
+  return { ok: true, imported: items.length, errors }
+}

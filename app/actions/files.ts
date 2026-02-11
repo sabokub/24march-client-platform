@@ -290,3 +290,60 @@ export async function getDeliverableUrl(deliverableId: string) {
 
   return { url: data?.signedUrl }
 }
+
+export async function deleteDeliverable(deliverableId: string) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { ok: false, message: 'Non autorise' }
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile || profile.role !== 'admin') {
+    return { ok: false, message: 'Reserve aux administrateurs' }
+  }
+
+  const { data: deliverable, error: deliverableError } = await supabase
+    .from('deliverables')
+    .select('id, storage_path, project_id')
+    .eq('id', deliverableId)
+    .single()
+
+  if (deliverableError || !deliverable) {
+    console.error('[deleteDeliverable] deliverable fetch error:', deliverableError)
+    return { ok: false, message: 'Livrable non trouve' }
+  }
+
+  const { error: storageError } = await supabase
+    .storage
+    .from('deliverables')
+    .remove([deliverable.storage_path])
+
+  if (storageError) {
+    console.error('[deleteDeliverable] storage delete error:', storageError)
+    return { ok: false, message: storageError.message }
+  }
+
+  const { error: dbError } = await supabase
+    .from('deliverables')
+    .delete()
+    .eq('id', deliverableId)
+
+  if (dbError) {
+    console.error('[deleteDeliverable] db delete error:', dbError)
+    return { ok: false, message: dbError.message }
+  }
+
+  await logAudit('deliverable.delete', user.id, deliverable.project_id, { deliverableId })
+
+  revalidatePath(`/admin/projects/${deliverable.project_id}`)
+  revalidatePath(`/dashboard/projects/${deliverable.project_id}`)
+
+  return { ok: true }
+}

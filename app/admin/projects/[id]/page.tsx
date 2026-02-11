@@ -140,7 +140,16 @@ supabase
       public_url: data?.signedUrl ?? null,
     }
   }))
-  const safeDeliverables = (deliverables as any) ?? []
+  const safeDeliverables = await Promise.all(((deliverables as any) ?? []).map(async (deliverable: any) => {
+    const { data } = await supabase.storage
+      .from('deliverables')
+      .createSignedUrl(deliverable.storage_path, 60 * 60)
+
+    return {
+      ...deliverable,
+      signed_url: data?.signedUrl ?? null,
+    }
+  }))
   const safeShoppingLists = (shoppingLists as any) ?? []
   const latestShoppingList = safeShoppingLists[safeShoppingLists.length - 1] ?? null
 

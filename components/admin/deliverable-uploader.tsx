@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { uploadDeliverable, getDeliverableUrl } from '@/app/actions/files'
+import { uploadDeliverable, getDeliverableUrl, deleteDeliverable } from '@/app/actions/files'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -14,7 +14,7 @@ import type { Deliverable, DeliverableType } from '@/types/database'
 
 interface AdminDeliverableUploaderProps {
   projectId: string
-  deliverables: Deliverable[]
+  deliverables: Array<Deliverable & { signed_url?: string | null }>
 }
 
 export function AdminDeliverableUploader({ projectId, deliverables }: AdminDeliverableUploaderProps) {
@@ -22,6 +22,7 @@ export function AdminDeliverableUploader({ projectId, deliverables }: AdminDeliv
   const [deliverableType, setDeliverableType] = useState<DeliverableType>('render_3d')
   const [notes, setNotes] = useState('')
   const [loadingId, setLoadingId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,6 +50,10 @@ export function AdminDeliverableUploader({ projectId, deliverables }: AdminDeliv
   }
 
   const handleDownload = async (deliverable: Deliverable) => {
+    if ((deliverable as any).signed_url) {
+      window.open((deliverable as any).signed_url, '_blank')
+      return
+    }
     setLoadingId(deliverable.id)
     const result = await getDeliverableUrl(deliverable.id)
     if (result.error) {
@@ -57,6 +62,18 @@ export function AdminDeliverableUploader({ projectId, deliverables }: AdminDeliv
       window.open(result.url, '_blank')
     }
     setLoadingId(null)
+  }
+
+  const handleDelete = async (deliverable: Deliverable) => {
+    if (!confirm('Supprimer ce livrable ?')) return
+    setDeletingId(deliverable.id)
+    const result = await deleteDeliverable(deliverable.id)
+    if (!result.ok) {
+      toast.error(result.message)
+    } else {
+      toast.success('Livrable supprime')
+    }
+    setDeletingId(null)
   }
 
   const getIcon = (type: DeliverableType) => {
@@ -164,17 +181,31 @@ export function AdminDeliverableUploader({ projectId, deliverables }: AdminDeliv
                     )}
                   </div>
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => handleDownload(deliverable)}
-                  disabled={loadingId === deliverable.id}
-                >
-                  {loadingId === deliverable.id ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Download className="w-4 h-4" />
-                  )}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleDownload(deliverable)}
+                    disabled={loadingId === deliverable.id}
+                  >
+                    {loadingId === deliverable.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Download className="w-4 h-4" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleDelete(deliverable)}
+                    disabled={deletingId === deliverable.id}
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  >
+                    {deletingId === deliverable.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
               </div>
             )
           })}

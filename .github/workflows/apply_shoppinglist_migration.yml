@@ -1,0 +1,36 @@
+name: Apply Shopping Lists Migration and Redeploy
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  apply-migration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install psql client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Run shopping_lists corrective migration
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then echo "DATABASE_URL secret is not set"; exit 1; fi
+          echo "Running migration: supabase/migrations/20260206b_fix_shopping_lists_schema.sql"
+          psql "$DATABASE_URL" -f supabase/migrations/20260206b_fix_shopping_lists_schema.sql
+
+      - name: Trigger redeploy via Vercel deploy hook (optional)
+        if: secrets.VERCEL_DEPLOY_HOOK
+        env:
+          VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$VERCEL_DEPLOY_HOOK" ]; then echo "VERCEL_DEPLOY_HOOK not provided; skipping redeploy"; exit 0; fi
+          echo "Triggering redeploy via Vercel deploy hook"
+          curl -s -X POST "$VERCEL_DEPLOY_HOOK" || true
+
+      - name: Print success message
+        run: echo "Migration job finished. Check action logs for details."

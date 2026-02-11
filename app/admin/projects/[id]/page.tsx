@@ -120,12 +120,13 @@ export default async function AdminProjectDetailPage({
       .select('*')
       .eq('project_id', projectRow.id)
       .order('created_at', { ascending: false }),
-    supabase
-      .from('shopping_lists')
-      .select('*, items:shopping_list_items(*)')
-      .eq('project_id', projectRow.id)
-      .order('created_at', { ascending: true }),
-  ))
+supabase
+  .from('shopping_lists')
+  .select('*, items:shopping_list_items(*)')
+  .eq('project_id', projectRow.id)
+  .order('created_at', { ascending: true })
+])
+
 
   const clientData: ClientProfile | null = clientError ? null : (client as any)
   const brief = (briefs as any)?.[0] ?? null

@@ -467,6 +467,27 @@ export async function importShoppingListItems(
 
 export async function fetchProductMeta(productUrl: string) {
   try {
+    const inferCategory = (url: string) => {
+      const normalized = url.toLowerCase()
+      const rules: Array<{ keywords: string[]; category: string }> = [
+        { keywords: ['canape', 'fauteuil', 'chaise', 'tabouret', 'banquette'], category: 'Assises' },
+        { keywords: ['table', 'bureau', 'console', 'table-basse'], category: 'Tables' },
+        { keywords: ['lampe', 'luminaire', 'suspension', 'applique'], category: 'Luminaires' },
+        { keywords: ['tapis', 'rideau', 'coussin', 'plaid'], category: 'Textiles' },
+        { keywords: ['miroir', 'cadre', 'vase', 'deco'], category: 'Déco' },
+        { keywords: ['etagere', 'bibliotheque', 'armoire', 'commode', 'rangement'], category: 'Rangements' },
+        { keywords: ['lit', 'matelas', 'chevet'], category: 'Chambre' },
+      ]
+
+      for (const rule of rules) {
+        if (rule.keywords.some((keyword) => normalized.includes(keyword))) {
+          return rule.category
+        }
+      }
+
+      return 'Déco'
+    }
+
     const res = await fetch(productUrl, {
       headers: {
         'user-agent': 'Mozilla/5.0 (compatible; 24march-bot/1.0)'
@@ -546,6 +567,7 @@ export async function fetchProductMeta(productUrl: string) {
         vendor,
         price,
         image_url: ogImage,
+        category: inferCategory(productUrl),
       }
     }
   } catch (err) {

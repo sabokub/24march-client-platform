@@ -68,7 +68,7 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
     formData.append('affiliate_url', newItem.affiliate_url)
     formData.append('image_url', newItem.image_url)
     formData.append('image_storage_path', newItem.image_storage_path)
-    formData.append('category', newItem.category)
+    formData.append('category', newItem.category?.trim() || 'Déco')
     formData.append('notes', newItem.notes)
 
     const result = await addShoppingListItem(formData)
@@ -135,13 +135,14 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
       return
     }
 
-    const { name, vendor, price, image_url } = data
+    const { name, vendor, price, image_url, category } = data
     setNewItem((prev) => ({
       ...prev,
       title: name || prev.title,
       retailer: vendor || prev.retailer,
       price_eur: price !== null && price !== undefined ? String(price) : prev.price_eur,
       image_url: image_url || prev.image_url,
+      category: category || prev.category,
     }))
 
     if (image_url) {

@@ -420,6 +420,8 @@ export function AdminShoppingListEditor({ projectId, shoppingList }: AdminShoppi
               Annuler
             </Button>
             <Button
+              type="button"
+              formNoValidate
               onClick={handleAddItem}
               disabled={isAddingItem}
               className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"

@@ -41,7 +41,7 @@ export const shoppingListItemSchema = z.object({
   category: z.string().optional(),
   style_tags: z.array(z.string()).optional(),
   notes: z.string().optional(),
-  position: z.number().int().min(0),
+  position: z.number().int().min(0).optional(),
 })
 
 // Message validation

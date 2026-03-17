@@ -140,9 +140,9 @@ export async function resetPassword(formData: FormData): Promise<ActionResult> {
   const { email } = result.data
   const baseUrl = getBaseUrl()
 
-  // redirige vers /auth/update-password (ta page gère la suite)
+  // Redirige vers /auth/reset-callback (route API qui gère l'échange du code)
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${baseUrl}/auth/update-password`,
+    redirectTo: `${baseUrl}/auth/reset-callback`,
   })
 
   if (error) {

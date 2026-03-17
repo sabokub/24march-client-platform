@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { getAssetUrl } from '@/app/actions/files'
+import { downloadFile } from '@/lib/download'
 import { Button } from '@/components/ui/button'
 import { FileImage, File, Download, Loader2, FolderOpen } from 'lucide-react'
 import { toast } from 'sonner'
@@ -21,7 +22,7 @@ export function AssetViewer({ assets }: AssetViewerProps) {
     if (result.error) {
       toast.error(result.error)
     } else if (result.url) {
-      window.open(result.url, '_blank')
+      downloadFile(result.url, asset.file_name)
     }
     setLoadingId(null)
   }

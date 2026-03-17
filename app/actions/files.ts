@@ -234,8 +234,8 @@ export async function getAssetUrl(assetId: string) {
     .eq('id', user.id)
     .single()
 
-  let query = supabase.from('assets').select('storage_path').eq('id', assetId)
-  
+  let query = supabase.from('assets').select('storage_path, file_name').eq('id', assetId)
+
   if (profile?.role !== 'admin') {
     query = query.eq('user_id', user.id)
   }
@@ -248,7 +248,9 @@ export async function getAssetUrl(assetId: string) {
 
   const { data } = await supabase.storage
     .from('assets')
-    .createSignedUrl(asset.storage_path, 3600) // 1 hour
+    .createSignedUrl(asset.storage_path, 3600, {
+      download: asset.file_name
+    })
 
   return { url: data?.signedUrl }
 }
@@ -264,7 +266,7 @@ export async function getDeliverableUrl(deliverableId: string) {
   // Get deliverable with project to check access
   const { data: deliverable } = await supabase
     .from('deliverables')
-    .select('storage_path, project:projects(owner_id)')
+    .select('storage_path, file_name, project:projects(owner_id)')
     .eq('id', deliverableId)
     .single()
 
@@ -286,7 +288,9 @@ export async function getDeliverableUrl(deliverableId: string) {
 
   const { data } = await supabase.storage
     .from('deliverables')
-    .createSignedUrl(deliverable.storage_path, 3600)
+    .createSignedUrl(deliverable.storage_path, 3600, {
+      download: deliverable.file_name
+    })
 
   return { url: data?.signedUrl }
 }

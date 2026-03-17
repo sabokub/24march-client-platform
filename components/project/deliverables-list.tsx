@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { getDeliverableUrl } from '@/app/actions/files'
+import { downloadFile } from '@/lib/download'
 import { Button } from '@/components/ui/button'
 import { FileImage, FileText, Video, Download, Loader2, FolderOpen } from 'lucide-react'
 import { toast } from 'sonner'
@@ -21,7 +22,7 @@ export function DeliverablesList({ deliverables }: DeliverablesListProps) {
     if (result.error) {
       toast.error(result.error)
     } else if (result.url) {
-      window.open(result.url, '_blank')
+      downloadFile(result.url, deliverable.file_name)
     }
     setLoadingId(null)
   }

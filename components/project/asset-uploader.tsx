@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { uploadAssets, deleteAsset, getAssetUrl } from '@/app/actions/files'
+import { downloadFile } from '@/lib/download'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Upload, Trash2, FileImage, File, Download, Loader2 } from 'lucide-react'
@@ -61,7 +62,7 @@ export function AssetUploader({ projectId, assets }: AssetUploaderProps) {
     if (result.error) {
       toast.error(result.error)
     } else if (result.url) {
-      window.open(result.url, '_blank')
+      downloadFile(result.url, asset.file_name)
     }
     setLoadingAsset(null)
   }

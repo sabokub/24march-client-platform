@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { signUpSchema, signInSchema, resetPasswordSchema } from '@/lib/validations'
+import { signUpSchema, signInSchema, resetPasswordSchema, updateProfileSchema } from '@/lib/validations'
 import { logAudit } from '@/lib/audit'
 import { getBaseUrl } from '@/lib/url'
 
@@ -185,4 +185,53 @@ export async function updatePassword(formData: FormData): Promise<ActionResult> 
 
   revalidatePath('/', 'layout')
   redirect('/dashboard')
+}
+
+// Mise à jour du profil utilisateur
+export async function updateProfile(formData: FormData): Promise<ActionResult> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) {
+    return { ok: false, message: 'Utilisateur non authentifié' }
+  }
+
+  const rawData = {
+    name: String(formData.get('name') ?? '').trim(),
+    phone: (String(formData.get('phone') ?? '').trim() || undefined) as string | undefined,
+    password: (String(formData.get('password') ?? '').trim() || undefined) as string | undefined,
+  }
+
+  const result = updateProfileSchema.safeParse(rawData)
+  if (!result.success) {
+    return { ok: false, message: result.error.errors[0].message }
+  }
+
+  const { name, phone, password } = result.data
+
+  // Update password if provided
+  if (password) {
+    const { error: passwordError } = await supabase.auth.updateUser({ password })
+    if (passwordError) {
+      return { ok: false, message: `Erreur mot de passe: ${passwordError.message}` }
+    }
+  }
+
+  // Update profile in database
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .update({ name, phone, updated_at: new Date().toISOString() })
+    .eq('id', user.id)
+
+  if (profileError) {
+    return { ok: false, message: `Erreur profil: ${profileError.message}` }
+  }
+
+  revalidatePath('/dashboard/settings', 'page')
+  revalidatePath('/admin/settings', 'page')
+  return { ok: true }
 }

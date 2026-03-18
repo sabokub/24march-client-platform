@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Loader2, ArrowLeft } from 'lucide-react'
+import { Loader2, ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 
@@ -22,6 +22,8 @@ function SettingsForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
 
   useEffect(() => {
     async function loadProfile() {
@@ -84,6 +86,10 @@ function SettingsForm() {
     return (
       <div className="space-y-4">
         <div className="space-y-2">
+          <Label>Prénom</Label>
+          <Input disabled placeholder="Chargement..." />
+        </div>
+        <div className="space-y-2">
           <Label>Nom</Label>
           <Input disabled placeholder="Chargement..." />
         </div>
@@ -103,19 +109,39 @@ function SettingsForm() {
     )
   }
 
+  // Split full name into first and last names
+  const nameParts = (profile?.name || '').split(' ')
+  const firstName = nameParts[0] || ''
+  const lastName = nameParts.slice(1).join(' ') || ''
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="name">Nom</Label>
-        <Input
-          id="name"
-          name="name"
-          type="text"
-          placeholder="Votre nom"
-          defaultValue={profile?.name || ''}
-          required
-          disabled={isLoading}
-        />
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="firstName">Prénom</Label>
+          <Input
+            id="firstName"
+            name="firstName"
+            type="text"
+            placeholder="Votre prénom"
+            defaultValue={firstName}
+            required
+            disabled={isLoading}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="lastName">Nom</Label>
+          <Input
+            id="lastName"
+            name="lastName"
+            type="text"
+            placeholder="Votre nom"
+            defaultValue={lastName}
+            required
+            disabled={isLoading}
+          />
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -145,15 +171,47 @@ function SettingsForm() {
 
       <div className="border-t pt-6">
         <h3 className="font-semibold mb-4">Changer le mot de passe</h3>
-        <div className="space-y-2">
+
+        <div className="space-y-2 mb-4">
           <Label htmlFor="password">Nouveau mot de passe (optionnel)</Label>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            placeholder="Au moins 8 caractères"
-            disabled={isLoading}
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Au moins 8 caractères"
+              disabled={isLoading}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              tabIndex={-1}
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="passwordConfirm">Confirmer le mot de passe</Label>
+          <div className="relative">
+            <Input
+              id="passwordConfirm"
+              name="passwordConfirm"
+              type={showPasswordConfirm ? 'text' : 'password'}
+              placeholder="Confirmez votre mot de passe"
+              disabled={isLoading}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              tabIndex={-1}
+            >
+              {showPasswordConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
           <p className="text-xs text-gray-500">Laissez vide pour ne pas changer</p>
         </div>
       </div>
@@ -179,6 +237,10 @@ function SettingsForm() {
 function SettingsFormFallback() {
   return (
     <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Prénom</Label>
+        <Input disabled placeholder="Chargement..." />
+      </div>
       <div className="space-y-2">
         <Label>Nom</Label>
         <Input disabled placeholder="Chargement..." />

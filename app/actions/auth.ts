@@ -201,9 +201,11 @@ export async function updateProfile(formData: FormData): Promise<ActionResult> {
   }
 
   const rawData = {
-    name: String(formData.get('name') ?? '').trim(),
+    firstName: String(formData.get('firstName') ?? '').trim(),
+    lastName: String(formData.get('lastName') ?? '').trim(),
     phone: (String(formData.get('phone') ?? '').trim() || undefined) as string | undefined,
     password: (String(formData.get('password') ?? '').trim() || undefined) as string | undefined,
+    passwordConfirm: (String(formData.get('passwordConfirm') ?? '').trim() || undefined) as string | undefined,
   }
 
   const result = updateProfileSchema.safeParse(rawData)
@@ -211,7 +213,8 @@ export async function updateProfile(formData: FormData): Promise<ActionResult> {
     return { ok: false, message: result.error.errors[0].message }
   }
 
-  const { name, phone, password } = result.data
+  const { firstName, lastName, phone, password } = result.data
+  const fullName = `${firstName} ${lastName}`
 
   // Update password if provided
   if (password) {
@@ -224,7 +227,7 @@ export async function updateProfile(formData: FormData): Promise<ActionResult> {
   // Update profile in database
   const { error: profileError } = await supabase
     .from('profiles')
-    .update({ name, phone, updated_at: new Date().toISOString() })
+    .update({ name: fullName, phone, updated_at: new Date().toISOString() })
     .eq('id', user.id)
 
   if (profileError) {

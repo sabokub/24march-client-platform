@@ -73,9 +73,19 @@ export function validateFile(file: File): { valid: boolean; error?: string } {
 
 // Profile update validation
 export const updateProfileSchema = z.object({
-  name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
+  firstName: z.string().min(2, 'Le prénom doit contenir au moins 2 caractères'),
+  lastName: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
   phone: z.string().optional(),
   password: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères').optional(),
+  passwordConfirm: z.string().optional(),
+}).refine((data) => {
+  if (data.password || data.passwordConfirm) {
+    return data.password === data.passwordConfirm
+  }
+  return true
+}, {
+  message: 'Les mots de passe ne correspondent pas',
+  path: ['passwordConfirm'],
 })
 
 export type SignUpInput = z.infer<typeof signUpSchema>

@@ -71,9 +71,17 @@ export function validateFile(file: File): { valid: boolean; error?: string } {
   return { valid: true }
 }
 
+// Profile update validation
+export const updateProfileSchema = z.object({
+  name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
+  phone: z.string().optional(),
+  password: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères').optional(),
+})
+
 export type SignUpInput = z.infer<typeof signUpSchema>
 export type SignInInput = z.infer<typeof signInSchema>
 export type CreateProjectInput = z.infer<typeof createProjectSchema>
 export type ProjectBriefInput = z.infer<typeof projectBriefSchema>
 export type ShoppingListItemInput = z.infer<typeof shoppingListItemSchema>
 export type MessageInput = z.infer<typeof messageSchema>
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>

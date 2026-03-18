@@ -218,7 +218,14 @@ CREATE POLICY "View shopping list items"
             WHERE sl.id = list_id
             AND (
                 is_admin()
-                OR (owns_project(sl.project_id) AND sl.status != 'draft')
+                OR (
+                    EXISTS (
+                        SELECT 1 FROM projects p
+                        WHERE p.id = sl.project_id
+                        AND p.owner_id = auth.uid()
+                    )
+                    AND sl.status != 'draft'
+                )
             )
         )
     );

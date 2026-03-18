@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Home, LogOut, FolderOpen, Users, TrendingUp } from 'lucide-react'
+import { Home, LogOut, FolderOpen, Users, TrendingUp, Settings } from 'lucide-react'
 import { signOut } from '@/app/actions/auth'
 import { getStatusLabel, getStatusColor, formatDate } from '@/lib/utils'
 import RoomTypeSelect from '@/components/admin/RoomTypeSelect'
@@ -101,6 +101,12 @@ export default async function AdminDashboardPage({
           </Link>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">{profile.name}</span>
+            <Link href="/admin/settings">
+              <Button variant="ghost" size="sm">
+                <Settings className="w-4 h-4 mr-2" />
+                Paramètres
+              </Button>
+            </Link>
             <form action={signOut}>
               <Button variant="ghost" size="sm" type="submit">
                 <LogOut className="w-4 h-4 mr-2" />

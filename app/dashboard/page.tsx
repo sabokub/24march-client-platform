@@ -52,6 +52,12 @@ export default async function DashboardPage() {
           </Link>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">Bonjour, {profile?.name || user.email}</span>
+            <Link href="/dashboard/settings">
+              <Button variant="ghost" size="sm">
+                <Settings className="w-4 h-4 mr-2" />
+                Paramètres
+              </Button>
+            </Link>
             <form action={signOut}>
               <Button variant="ghost" size="sm" type="submit">
                 <LogOut className="w-4 h-4 mr-2" />

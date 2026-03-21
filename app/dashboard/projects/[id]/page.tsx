@@ -13,6 +13,7 @@ import { AssetUploader } from '@/components/project/asset-uploader'
 import { MessageList } from '@/components/project/message-list'
 import { ShoppingListView } from '@/components/project/shopping-list-view'
 import { DeliverablesList } from '@/components/project/deliverables-list'
+import { DeleteProjectButton } from '@/components/project/delete-project-button'
 
 export const dynamic = 'force-dynamic'
 
@@ -151,7 +152,10 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
         <div className="mb-8">
           <div className="flex items-start justify-between mb-2">
             <h1 className="text-2xl font-bold text-gray-900">{project.title}</h1>
-            <Badge className={getStatusColor(project.status)}>{getStatusLabel(project.status)}</Badge>
+            <div className="flex items-center gap-3">
+              <Badge className={getStatusColor(project.status)}>{getStatusLabel(project.status)}</Badge>
+              <DeleteProjectButton projectId={project.id} projectTitle={project.title} status={project.status} />
+            </div>
           </div>
 
           <div className="flex items-center gap-4 text-sm text-gray-600">

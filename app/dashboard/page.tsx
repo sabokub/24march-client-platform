@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Home, Plus, FolderOpen, Settings, LogOut } from 'lucide-react'
 import { signOut } from '@/app/actions/auth'
 import { getStatusLabel, getStatusColor, formatDate } from '@/lib/utils'
+import { DeleteProjectButton } from '@/components/project/delete-project-button'
 
 export const dynamic = 'force-dynamic'
 
@@ -99,33 +100,40 @@ export default async function DashboardPage() {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {sortedProjects.map((project) => (
-              <Link key={project.id} href={`/dashboard/projects/${project.id}`}>
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <CardTitle className="text-lg">{project.title}</CardTitle>
-                      <Badge className={getStatusColor(project.status)}>
-                        {getStatusLabel(project.status)}
-                      </Badge>
-                    </div>
-                    <CardDescription>
-                      {project.room_type && <span className="block">{project.room_type}</span>}
-                      Créé le {formatDate(project.created_at)}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {project.style_tags && project.style_tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {project.style_tags.map((tag: string) => (
-                          <Badge key={tag} variant="secondary" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
+              <div key={project.id} className="group">
+                <Link href={`/dashboard/projects/${project.id}`}>
+                  <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <CardTitle className="text-lg">{project.title}</CardTitle>
+                        <Badge className={getStatusColor(project.status)}>
+                          {getStatusLabel(project.status)}
+                        </Badge>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </Link>
+                      <CardDescription>
+                        {project.room_type && <span className="block">{project.room_type}</span>}
+                        Créé le {formatDate(project.created_at)}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {project.style_tags && project.style_tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {project.style_tags.map((tag: string) => (
+                            <Badge key={tag} variant="secondary" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Link>
+                {project.status === 'draft' && (
+                  <div className="mt-2 flex justify-end">
+                    <DeleteProjectButton projectId={project.id} projectTitle={project.title} status={project.status} />
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         )}

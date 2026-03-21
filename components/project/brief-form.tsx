@@ -149,6 +149,10 @@ export function ProjectBriefForm({ projectId, initialData, projectStatus, budget
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const isSubmitted = projectStatus !== 'draft'
+
+  // Debug logging
+  console.log('[ProjectBriefForm] Props received:', { projectId, projectStatus, budgetRange })
+
   const budgetOptions = generateBudgetOptions(budgetRange)
 
   const handleChange = (questionId: string, value: any) => {

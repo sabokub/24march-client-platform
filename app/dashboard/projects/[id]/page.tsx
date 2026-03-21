@@ -191,7 +191,7 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
                 <CardDescription>Remplissez ce questionnaire pour nous aider à comprendre vos besoins</CardDescription>
               </CardHeader>
               <CardContent>
-                <ProjectBriefForm projectId={project.id} initialData={{}} projectStatus={project.status} />
+                <ProjectBriefForm projectId={project.id} initialData={{}} projectStatus={project.status} budgetRange={project.budget_range} />
               </CardContent>
             </Card>
           </TabsContent>

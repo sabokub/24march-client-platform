@@ -100,12 +100,12 @@ export default async function DashboardPage() {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {sortedProjects.map((project) => (
-              <div key={project.id}>
-                <Card className="hover:shadow-lg transition-shadow h-full">
+              <Link key={project.id} href={`/dashboard/projects/${project.id}`} className="block">
+                <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <CardTitle className="text-lg">{project.title}</CardTitle>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                         <Badge className={getStatusColor(project.status)}>
                           {getStatusLabel(project.status)}
                         </Badge>
@@ -120,23 +120,18 @@ export default async function DashboardPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Link href={`/dashboard/projects/${project.id}`} className="block cursor-pointer hover:underline">
-                      {project.style_tags && project.style_tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {project.style_tags.map((tag: string) => (
-                            <Badge key={tag} variant="secondary" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                      {(!project.style_tags || project.style_tags.length === 0) && (
-                        <p className="text-sm text-gray-500">Cliquez pour accéder au projet</p>
-                      )}
-                    </Link>
+                    {project.style_tags && project.style_tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {project.style_tags.map((tag: string) => (
+                          <Badge key={tag} variant="secondary" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
-              </div>
+              </Link>
             ))}
           </div>
         )}

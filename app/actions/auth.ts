@@ -79,15 +79,23 @@ export async function signIn(formData: FormData): Promise<ActionResult> {
 
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
   if (error) {
+    console.error('[signIn] signInWithPassword error:', error)
     return { ok: false, message: error.message }
   }
 
   const user = data.user
   if (!user) {
+    console.error('[signIn] User not found after successful sign in')
     return { ok: false, message: 'Connexion ok mais utilisateur introuvable.' }
   }
 
-  await logAudit('auth.login', user.id)
+  console.log('[signIn] User signed in:', user.id)
+
+  try {
+    await logAudit('auth.login', user.id)
+  } catch (auditError) {
+    console.error('[signIn] Audit log error:', auditError)
+  }
 
   // Vérifier si l'utilisateur est admin pour rediriger vers /admin
   const { data: profile, error: profileError } = await supabase
@@ -96,11 +104,27 @@ export async function signIn(formData: FormData): Promise<ActionResult> {
     .eq('id', user.id)
     .maybeSingle()
 
+  console.log('[signIn] Profile query result:', { profile, profileError })
+
   if (profileError) {
+    console.error('[signIn] Profile query error:', profileError)
     return {
       ok: false,
       message:
         "Connexion OK, mais profil introuvable ou non lisible. Vérifie que l'utilisateur a une ligne dans 'profiles' et que la policy RLS autorise SELECT sur son propre profil.",
+    }
+  }
+
+  if (!profile) {
+    console.warn('[signIn] No profile found for user:', user.id)
+    // Create a default profile if it doesn't exist
+    const { error: createError } = await supabase.from('profiles').insert({
+      id: user.id,
+      email: user.email,
+      role: 'client',
+    })
+    if (createError) {
+      console.error('[signIn] Error creating default profile:', createError)
     }
   }
 

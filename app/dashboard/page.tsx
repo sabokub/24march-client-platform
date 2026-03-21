@@ -105,7 +105,7 @@ export default async function DashboardPage() {
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <CardTitle className="text-lg">{project.title}</CardTitle>
-                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-2">
                         <Badge className={getStatusColor(project.status)}>
                           {getStatusLabel(project.status)}
                         </Badge>

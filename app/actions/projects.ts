@@ -97,6 +97,54 @@ export async function updateProject(
   return { success: true }
 }
 
+export async function deleteProject(projectId: string): Promise<ActionResult> {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, message: 'Non autorisé' }
+
+  // Get the project to check status and ownership
+  const { data: project, error: projectError } = await supabase
+    .from('projects')
+    .select('status, owner_id')
+    .eq('id', projectId)
+    .single()
+
+  if (projectError || !project) {
+    return { ok: false, message: 'Projet non trouvé' }
+  }
+
+  if (project.owner_id !== user.id) {
+    return { ok: false, message: 'Non autorisé' }
+  }
+
+  // Only allow deletion if status is draft (brief not submitted)
+  if (project.status !== 'draft') {
+    return { ok: false, message: 'Seuls les projets brouillons peuvent être supprimés' }
+  }
+
+  const { error } = await supabase
+    .from('projects')
+    .delete()
+    .eq('id', projectId)
+    .eq('owner_id', user.id)
+
+  if (error) {
+    console.error('[deleteProject] Database error:', {
+      code: error.code,
+      message: error.message,
+      projectId,
+      user_id: user.id,
+    })
+    return { ok: false, message: error.message }
+  }
+
+  await logAudit('project.delete', user.id, projectId, { status: project.status })
+
+  revalidatePath('/dashboard')
+  redirect('/dashboard')
+}
+
 export async function updateProjectStatus(projectId: string, status: ProjectStatus) {
   const supabase = await createClient()
 

@@ -52,7 +52,12 @@ const BRIEF_QUESTIONS = [
       'Repas en famille',
       'Jeux avec enfants',
       'Activités créatives',
+      'Divertissement (musique, vidéo)',
+      'Méditation/relaxation',
+      'Sports/exercice',
+      'Rangement',
     ],
+    hasOtherOption: true,
   },
   {
     id: 'storage_needs',
@@ -73,14 +78,14 @@ const BRIEF_QUESTIONS = [
     placeholder: 'Ex: Locataire (pas de travaux), animaux, allergies...',
   },
   {
-    id: 'timeline',
-    question: 'Quel est votre délai souhaité ?',
+    id: 'budget',
+    question: 'Avez-vous un budget défini pour ce projet ?',
     type: 'radio',
     options: [
-      'Pas de rush, prenez votre temps',
-      'Dans le mois',
-      'D\'ici 2-3 mois',
-      'Urgence (moins de 2 semaines)',
+      'Moins de 5 000 €',
+      '5 000 € - 15 000 €',
+      '15 000 € - 30 000 €',
+      'Plus de 30 000 € ou flexible',
     ],
   },
   {
@@ -196,22 +201,50 @@ export function ProjectBriefForm({ projectId, initialData, projectStatus }: Proj
           )}
           
           {q.type === 'checkbox' && (
-            <div className="grid grid-cols-2 gap-3">
-              {q.options?.map((option) => (
-                <div key={option} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`${q.id}-${option}`}
-                    checked={(answers[q.id] || []).includes(option)}
-                    onCheckedChange={(checked: boolean | 'indeterminate') => 
-                      handleCheckboxChange(q.id, option, checked as boolean)
-                    }
-                    disabled={isSubmitted}
-                  />
-                  <Label htmlFor={`${q.id}-${option}`} className="font-normal">
-                    {option}
-                  </Label>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                {q.options?.map((option) => (
+                  <div key={option} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`${q.id}-${option}`}
+                      checked={(answers[q.id] || []).includes(option)}
+                      onCheckedChange={(checked: boolean | 'indeterminate') =>
+                        handleCheckboxChange(q.id, option, checked as boolean)
+                      }
+                      disabled={isSubmitted}
+                    />
+                    <Label htmlFor={`${q.id}-${option}`} className="font-normal">
+                      {option}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+              {q.hasOtherOption && (
+                <div className="space-y-2 pt-2 border-t">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`${q.id}-other`}
+                      checked={(answers[q.id] || []).includes('other')}
+                      onCheckedChange={(checked: boolean | 'indeterminate') =>
+                        handleCheckboxChange(q.id, 'other', checked as boolean)
+                      }
+                      disabled={isSubmitted}
+                    />
+                    <Label htmlFor={`${q.id}-other`} className="font-normal">
+                      Autre
+                    </Label>
+                  </div>
+                  {(answers[q.id] || []).includes('other') && (
+                    <Input
+                      placeholder="Précisez votre réponse..."
+                      value={answers[`${q.id}_other_text`] || ''}
+                      onChange={(e) => handleChange(`${q.id}_other_text`, e.target.value)}
+                      disabled={isSubmitted}
+                      className="ml-6"
+                    />
+                  )}
                 </div>
-              ))}
+              )}
             </div>
           )}
         </div>

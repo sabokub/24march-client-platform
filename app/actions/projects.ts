@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { createProjectSchema, projectBriefSchema } from '@/lib/validations'
 import { logAudit } from '@/lib/audit'
 import { v4 as uuidv4 } from 'uuid'
@@ -64,7 +65,8 @@ export async function createProject(formData: FormData): Promise<ActionResult<{ 
   // refresh dashboard list
   revalidatePath('/dashboard')
 
-  return { ok: true, projectId }
+  // Redirect to dashboard after successful creation
+  redirect('/dashboard')
 }
 
 export async function updateProject(

@@ -94,7 +94,7 @@ export async function signIn(formData: FormData): Promise<ActionResult> {
     .from('profiles')
     .select('role')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
 
   if (profileError) {
     return {

@@ -29,7 +29,8 @@ export function DeleteProjectButton({ projectId, projectTitle, status }) {
     try {
       const result = await deleteProject(projectId)
 
-      if (result.ok === false) {
+      // Check if result exists and has ok property
+      if (result && result.ok === false) {
         toast.error(result.message)
         setIsLoading(false)
         return
@@ -40,10 +41,12 @@ export function DeleteProjectButton({ projectId, projectTitle, status }) {
     } catch (e) {
       // Check if it's a redirect error (expected on success)
       if (typeof e?.digest === 'string' && e.digest.startsWith('NEXT_REDIRECT')) {
+        // Success - the redirect happened, no need to show error
         return
       }
 
       const msg = e instanceof Error ? e.message : 'Erreur lors de la suppression'
+      console.error('Delete error:', e)
       toast.error(msg)
       setIsLoading(false)
     }

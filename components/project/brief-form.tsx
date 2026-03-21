@@ -81,12 +81,9 @@ const BRIEF_QUESTIONS = [
     id: 'budget',
     question: 'Avez-vous un budget défini pour ce projet ?',
     type: 'radio',
-    options: [
-      'Moins de 5 000 €',
-      '5 000 € - 15 000 €',
-      '15 000 € - 30 000 €',
-      'Plus de 30 000 € ou flexible',
-    ],
+    options: [], // Will be generated dynamically based on budgetRange
+    isDynamic: true,
+    hasCustomOption: true,
   },
   {
     id: 'additional_notes',
@@ -100,14 +97,62 @@ interface ProjectBriefFormProps {
   projectId: string
   initialData: Record<string, any>
   projectStatus: string
+  budgetRange?: string
 }
 
-export function ProjectBriefForm({ projectId, initialData, projectStatus }: ProjectBriefFormProps) {
+// Function to generate budget options based on the project's budget range
+function generateBudgetOptions(budgetRange?: string): string[] {
+  if (!budgetRange) {
+    return [
+      'Moins de 500 €',
+      '500 € - 1 000 €',
+      '1 000 € - 2 000 €',
+      '2 000 € - 5 000 €',
+      '5 000 € - 10 000 €',
+      '10 000 € - 20 000 €',
+      'Plus de 20 000 €',
+    ]
+  }
+
+  const options: Record<string, string[]> = {
+    'Moins de 2 000 €': [
+      'Moins de 500 €',
+      '500 € - 1 000 €',
+      '1 000 € - 1 500 €',
+      '1 500 € - 2 000 €',
+    ],
+    '2 000 € - 5 000 €': [
+      '2 000 € - 3 000 €',
+      '3 000 € - 4 000 €',
+      '4 000 € - 5 000 €',
+    ],
+    '5 000 € - 10 000 €': [
+      '5 000 € - 6 500 €',
+      '6 500 € - 8 000 €',
+      '8 000 € - 10 000 €',
+    ],
+    '10 000 € - 20 000 €': [
+      '10 000 € - 13 000 €',
+      '13 000 € - 16 000 €',
+      '16 000 € - 20 000 €',
+    ],
+    'Plus de 20 000 €': [
+      '20 000 € - 30 000 €',
+      '30 000 € - 50 000 €',
+      'Plus de 50 000 €',
+    ],
+  }
+
+  return options[budgetRange] || []
+}
+
+export function ProjectBriefForm({ projectId, initialData, projectStatus, budgetRange }: ProjectBriefFormProps) {
   const [answers, setAnswers] = useState<Record<string, any>>(initialData)
   const [isSaving, setIsSaving] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const isSubmitted = projectStatus !== 'draft'
+  const budgetOptions = generateBudgetOptions(budgetRange)
 
   const handleChange = (questionId: string, value: any) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }))
@@ -184,20 +229,39 @@ export function ProjectBriefForm({ projectId, initialData, projectStatus }: Proj
           )}
           
           {q.type === 'radio' && (
-            <RadioGroup
-              value={answers[q.id] || ''}
-              onValueChange={(value: string) => handleChange(q.id, value)}
-              disabled={isSubmitted}
-            >
-              {q.options?.map((option) => (
-                <div key={option} className="flex items-center space-x-2">
-                  <RadioGroupItem value={option} id={`${q.id}-${option}`} />
-                  <Label htmlFor={`${q.id}-${option}`} className="font-normal">
-                    {option}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
+            <div className="space-y-4">
+              <RadioGroup
+                value={answers[q.id] || ''}
+                onValueChange={(value: string) => handleChange(q.id, value)}
+                disabled={isSubmitted}
+              >
+                {(q.isDynamic ? budgetOptions : q.options)?.map((option) => (
+                  <div key={option} className="flex items-center space-x-2">
+                    <RadioGroupItem value={option} id={`${q.id}-${option}`} />
+                    <Label htmlFor={`${q.id}-${option}`} className="font-normal">
+                      {option}
+                    </Label>
+                  </div>
+                ))}
+                {q.hasCustomOption && (
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="custom" id={`${q.id}-custom`} />
+                    <Label htmlFor={`${q.id}-custom`} className="font-normal">
+                      Personnalisé
+                    </Label>
+                  </div>
+                )}
+              </RadioGroup>
+              {q.hasCustomOption && answers[q.id] === 'custom' && (
+                <Input
+                  placeholder="Entrez votre budget personnalisé..."
+                  value={answers[`${q.id}_custom_value`] || ''}
+                  onChange={(e) => handleChange(`${q.id}_custom_value`, e.target.value)}
+                  disabled={isSubmitted}
+                  className="ml-6"
+                />
+              )}
+            </div>
           )}
           
           {q.type === 'checkbox' && (

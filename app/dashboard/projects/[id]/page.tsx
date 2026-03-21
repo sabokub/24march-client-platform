@@ -54,6 +54,8 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
   }
   if (!project) notFound()
 
+  console.log('[ProjectDetail] Project budget_range:', project.budget_range)
+
   // ✅ Tables existantes: messages, deliverables, assets
   const [messagesRes, deliverablesRes, shoppingListsRes, assetsRes] = await Promise.all([
     supabase

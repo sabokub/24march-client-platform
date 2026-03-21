@@ -102,18 +102,6 @@ interface ProjectBriefFormProps {
 
 // Function to generate budget options based on the project's budget range
 function generateBudgetOptions(budgetRange?: string): string[] {
-  if (!budgetRange) {
-    return [
-      'Moins de 500 €',
-      '500 € - 1 000 €',
-      '1 000 € - 2 000 €',
-      '2 000 € - 5 000 €',
-      '5 000 € - 10 000 €',
-      '10 000 € - 20 000 €',
-      'Plus de 20 000 €',
-    ]
-  }
-
   const options: Record<string, string[]> = {
     'Moins de 2 000 €': [
       'Moins de 500 €',
@@ -143,7 +131,16 @@ function generateBudgetOptions(budgetRange?: string): string[] {
     ],
   }
 
-  return options[budgetRange] || []
+  if (!budgetRange) {
+    console.warn('[generateBudgetOptions] budgetRange is undefined')
+    return []
+  }
+
+  const result = options[budgetRange]
+  if (!result) {
+    console.warn(`[generateBudgetOptions] budgetRange "${budgetRange}" not found in options`)
+  }
+  return result || []
 }
 
 export function ProjectBriefForm({ projectId, initialData, projectStatus, budgetRange }: ProjectBriefFormProps) {
@@ -152,6 +149,10 @@ export function ProjectBriefForm({ projectId, initialData, projectStatus, budget
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const isSubmitted = projectStatus !== 'draft'
+
+  // Debug logging
+  console.log('[ProjectBriefForm] Props received:', { projectId, projectStatus, budgetRange })
+
   const budgetOptions = generateBudgetOptions(budgetRange)
 
   const handleChange = (questionId: string, value: any) => {

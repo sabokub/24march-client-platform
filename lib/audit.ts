@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 export type AuditAction =
   | 'project.create'
   | 'project.update'
+  | 'project.delete'
   | 'project.status_change'
   | 'asset.upload'
   | 'asset.delete'

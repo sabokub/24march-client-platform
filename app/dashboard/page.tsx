@@ -100,22 +100,27 @@ export default async function DashboardPage() {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {sortedProjects.map((project) => (
-              <div key={project.id} className="group">
-                <Link href={`/dashboard/projects/${project.id}`}>
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <CardTitle className="text-lg">{project.title}</CardTitle>
+              <div key={project.id}>
+                <Card className="hover:shadow-lg transition-shadow h-full">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <CardTitle className="text-lg">{project.title}</CardTitle>
+                      <div className="flex items-center gap-2">
                         <Badge className={getStatusColor(project.status)}>
                           {getStatusLabel(project.status)}
                         </Badge>
+                        {project.status === 'draft' && (
+                          <DeleteProjectButton projectId={project.id} projectTitle={project.title} status={project.status} />
+                        )}
                       </div>
-                      <CardDescription>
-                        {project.room_type && <span className="block">{project.room_type}</span>}
-                        Créé le {formatDate(project.created_at)}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
+                    </div>
+                    <CardDescription>
+                      {project.room_type && <span className="block">{project.room_type}</span>}
+                      Créé le {formatDate(project.created_at)}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Link href={`/dashboard/projects/${project.id}`} className="block cursor-pointer hover:underline">
                       {project.style_tags && project.style_tags.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                           {project.style_tags.map((tag: string) => (
@@ -125,14 +130,12 @@ export default async function DashboardPage() {
                           ))}
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
-                </Link>
-                {project.status === 'draft' && (
-                  <div className="mt-2 flex justify-end">
-                    <DeleteProjectButton projectId={project.id} projectTitle={project.title} status={project.status} />
-                  </div>
-                )}
+                      {(!project.style_tags || project.style_tags.length === 0) && (
+                        <p className="text-sm text-gray-500">Cliquez pour accéder au projet</p>
+                      )}
+                    </Link>
+                  </CardContent>
+                </Card>
               </div>
             ))}
           </div>

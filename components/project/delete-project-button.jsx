@@ -14,15 +14,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog.jsx'
+} from '@/components/ui/alert-dialog'
 
-interface DeleteProjectButtonProps {
-  projectId: string
-  projectTitle: string
-  status: string
-}
-
-export function DeleteProjectButton({ projectId, projectTitle, status }: DeleteProjectButtonProps) {
+export function DeleteProjectButton({ projectId, projectTitle, status }) {
   const [isLoading, setIsLoading] = useState(false)
 
   // Only show button if project is in draft status
@@ -45,7 +39,7 @@ export function DeleteProjectButton({ projectId, projectTitle, status }: DeleteP
       toast.success('Projet supprimé avec succès')
     } catch (e) {
       // Check if it's a redirect error (expected on success)
-      if (typeof (e as any)?.digest === 'string' && (e as any).digest.startsWith('NEXT_REDIRECT')) {
+      if (typeof e?.digest === 'string' && e.digest.startsWith('NEXT_REDIRECT')) {
         return
       }
 

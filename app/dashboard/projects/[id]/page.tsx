@@ -13,7 +13,7 @@ import { AssetUploader } from '@/components/project/asset-uploader'
 import { MessageList } from '@/components/project/message-list'
 import { ShoppingListView } from '@/components/project/shopping-list-view'
 import { DeliverablesList } from '@/components/project/deliverables-list'
-import { DeleteProjectButton } from '@/components/project/delete-project-button'
+import { DeleteProjectButton } from '@/components/project/delete-project-button.jsx'
 
 export const dynamic = 'force-dynamic'
 

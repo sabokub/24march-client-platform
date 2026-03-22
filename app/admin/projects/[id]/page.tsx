@@ -4,17 +4,12 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Home, ArrowLeft } from 'lucide-react'
 import { signOut } from '@/app/actions/auth'
 import { formatDate } from '@/lib/utils'
 import { AdminStatusChanger } from '@/components/admin/status-changer'
-import { AdminDeliverableUploader } from '@/components/admin/deliverable-uploader'
-import { AdminShoppingListEditor } from '@/components/admin/shopping-list-editor'
-import { MessageList } from '@/components/project/message-list'
-import { AssetViewer } from '@/components/admin/asset-viewer'
-import { BriefViewer } from '@/components/admin/brief-viewer'
 import { AdminDeleteProjectButton } from '@/components/admin/admin-delete-project-button'
+import { AdminProjectTabs } from '@/components/admin/admin-project-tabs'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,8 +19,6 @@ type ClientProfile = {
   email?: string | null
   phone?: string | null
 }
-
-const TAB_VISIBILITY = 'data-[state=inactive]:hidden data-[state=active]:block'
 
 export default async function AdminProjectDetailPage({
   params,
@@ -231,75 +224,14 @@ export default async function AdminProjectDetailPage({
           </Card>
         </div>
 
-        <Tabs defaultValue="brief" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
-            <TabsTrigger value="brief">Brief</TabsTrigger>
-            <TabsTrigger value="assets">Photos client</TabsTrigger>
-            <TabsTrigger value="deliverables">Livrables</TabsTrigger>
-            <TabsTrigger value="shopping">Shopping List</TabsTrigger>
-            <TabsTrigger value="messages">Messages</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="brief" forceMount className={TAB_VISIBILITY}>
-            <Card>
-              <CardHeader>
-                <CardTitle>Brief du projet</CardTitle>
-                <CardDescription>Réponses du client au questionnaire</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <BriefViewer answers={brief?.answers || {}} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="assets" forceMount className={TAB_VISIBILITY}>
-            <Card>
-              <CardHeader>
-                <CardTitle>Photos du client</CardTitle>
-                <CardDescription>Photos téléversées par le client</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <AssetViewer assets={safeAssets} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="deliverables" forceMount className={TAB_VISIBILITY}>
-            <Card>
-              <CardHeader>
-                <CardTitle>Livrables</CardTitle>
-                <CardDescription>Uploadez vos rendus 3D et documents</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <AdminDeliverableUploader projectId={projectRow.id} deliverables={safeDeliverables} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="shopping" forceMount className={TAB_VISIBILITY}>
-            <Card>
-              <CardHeader>
-                <CardTitle>Shopping List</CardTitle>
-                <CardDescription>Créez et gérez la liste d'achats</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <AdminShoppingListEditor projectId={projectRow.id} shoppingList={latestShoppingList} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="messages" forceMount className={TAB_VISIBILITY}>
-            <Card>
-              <CardHeader>
-                <CardTitle>Messages</CardTitle>
-                <CardDescription>Échangez avec le client</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <MessageList projectId={projectRow.id} currentUserId={user.id} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        <AdminProjectTabs
+          projectId={projectRow.id}
+          userId={user.id}
+          brief={brief}
+          safeAssets={safeAssets}
+          safeDeliverables={safeDeliverables}
+          latestShoppingList={latestShoppingList}
+        />
       </main>
     </div>
   )

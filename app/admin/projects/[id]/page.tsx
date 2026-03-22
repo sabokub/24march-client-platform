@@ -14,6 +14,7 @@ import { AdminShoppingListEditor } from '@/components/admin/shopping-list-editor
 import { MessageList } from '@/components/project/message-list'
 import { AssetViewer } from '@/components/admin/asset-viewer'
 import { BriefViewer } from '@/components/admin/brief-viewer'
+import { AdminDeleteProjectButton } from '@/components/admin/admin-delete-project-button'
 
 export const dynamic = 'force-dynamic'
 
@@ -195,7 +196,10 @@ export default async function AdminProjectDetailPage({
           <div className="md:col-span-2">
             <div className="flex items-start justify-between mb-2">
               <h1 className="text-2xl font-bold text-gray-900">{projectRow.title}</h1>
-              <AdminStatusChanger projectId={projectRow.id} currentStatus={projectRow.status} />
+              <div className="flex items-center gap-2">
+                <AdminStatusChanger projectId={projectRow.id} currentStatus={projectRow.status} />
+                <AdminDeleteProjectButton projectId={projectRow.id} projectTitle={projectRow.title} />
+              </div>
             </div>
 
             <div className="flex items-center gap-4 text-sm text-gray-600">

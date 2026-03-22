@@ -60,15 +60,43 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // 3) Admin guard
+  // 3) Admin guard with retry logic
   if (user && isAdminRoute) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle()
+    let profile = null
+    let lastError = null
+    const maxRetries = 3
+    const retryDelays = [0, 100, 200] // ms delays for retries
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        if (attempt > 0) {
+          await new Promise(resolve => setTimeout(resolve, retryDelays[attempt]))
+        }
+
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle()
+
+        if (error) {
+          lastError = error
+          console.warn(`[middleware] Admin role check attempt ${attempt + 1} failed:`, error)
+          continue
+        }
+
+        profile = data
+        break // Success, exit retry loop
+      } catch (err) {
+        lastError = err
+        console.warn(`[middleware] Admin role check attempt ${attempt + 1} exception:`, err)
+      }
+    }
 
     if (!profile || profile.role !== 'admin') {
+      if (lastError && !profile) {
+        console.error(`[middleware] Admin role check failed after ${maxRetries} attempts:`, lastError)
+      }
       const url = request.nextUrl.clone()
       url.pathname = '/dashboard'
       return NextResponse.redirect(url)

@@ -103,7 +103,7 @@ export async function deleteProject(projectId: string): Promise<ActionResult> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false, message: 'Non autorisé' }
 
-  // Get the project to check status and ownership
+  // Get the project to check ownership
   const { data: project, error: projectError } = await supabase
     .from('projects')
     .select('status, owner_id')
@@ -114,15 +114,29 @@ export async function deleteProject(projectId: string): Promise<ActionResult> {
     return { ok: false, message: 'Projet non trouvé' }
   }
 
-  if (project.owner_id !== user.id) {
+  // Check if user is admin or project owner
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  const isAdmin = profile?.role === 'admin'
+  const isOwner = project.owner_id === user.id
+
+  if (!isAdmin && !isOwner) {
     return { ok: false, message: 'Non autorisé' }
+  }
+
+  // Non-admin users can only delete projects before brief submission
+  if (!isAdmin && project.status !== 'draft') {
+    return { ok: false, message: 'Seuls les projets brouillons peuvent être supprimés' }
   }
 
   const { error } = await supabase
     .from('projects')
     .delete()
     .eq('id', projectId)
-    .eq('owner_id', user.id)
 
   if (error) {
     console.error('[deleteProject] Database error:', {

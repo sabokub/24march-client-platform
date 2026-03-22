@@ -16,7 +16,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 
-export function AdminDeleteProjectButton({ projectId, projectTitle }: { projectId: string; projectTitle: string }) {
+export function AdminDeleteProjectButton({ projectId, projectTitle }) {
   const [isLoading, setIsLoading] = useState(false)
 
   const handleDelete = async () => {

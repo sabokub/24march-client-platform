@@ -151,6 +151,13 @@ export async function deleteProject(projectId: string): Promise<ActionResult> {
   await logAudit('project.delete', user.id, projectId, { status: project.status })
 
   revalidatePath('/dashboard')
+  revalidatePath('/admin')
+
+  // Redirect to admin if user is admin, otherwise to dashboard
+  if (isAdmin) {
+    redirect('/admin')
+  }
+
   redirect('/dashboard')
 }
 

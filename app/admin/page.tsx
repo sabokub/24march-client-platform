@@ -4,11 +4,11 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Home, LogOut, FolderOpen, Users, TrendingUp, Settings } from 'lucide-react'
 import { signOut } from '@/app/actions/auth'
 import { getStatusLabel, getStatusColor, formatDate } from '@/lib/utils'
 import RoomTypeSelect from '@/components/admin/RoomTypeSelect'
+import { AdminProjectsFilter } from '@/components/admin/admin-projects-filter'
 
 export const dynamic = 'force-dynamic'
 
@@ -157,27 +157,7 @@ export default async function AdminDashboardPage({
                 <CardTitle>Projets</CardTitle>
                 <CardDescription>Gérez tous les projets clients</CardDescription>
               </div>
-              <form method="GET" className="flex items-center gap-3">
-                <input
-                  name="search"
-                  defaultValue={titleSearch}
-                  placeholder="Rechercher titre"
-                  className="px-3 py-2 border rounded w-48 text-sm"
-                />
-                <Select name="status" defaultValue={statusFilter || 'all'}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Filtrer par statut" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tous les statuts</SelectItem>
-                    <SelectItem value="draft">Brouillon</SelectItem>
-                    <SelectItem value="brief_submitted">Brief soumis</SelectItem>
-                    <SelectItem value="in_progress">En cours</SelectItem>
-                    <SelectItem value="delivered">Livré</SelectItem>
-                    <SelectItem value="completed">Terminé</SelectItem>
-                  </SelectContent>
-                </Select>
-              </form>
+              <AdminProjectsFilter statusFilter={statusFilter} titleSearch={titleSearch} />
             </div>
           </CardHeader>
           <CardContent>

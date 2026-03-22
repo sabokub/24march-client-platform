@@ -128,6 +128,11 @@ export async function deleteProject(projectId: string): Promise<ActionResult> {
     return { ok: false, message: 'Non autorisé' }
   }
 
+  // Non-admin users can only delete projects before brief submission
+  if (!isAdmin && project.status !== 'draft') {
+    return { ok: false, message: 'Seuls les projets brouillons peuvent être supprimés' }
+  }
+
   const { error } = await supabase
     .from('projects')
     .delete()

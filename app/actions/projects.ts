@@ -118,11 +118,6 @@ export async function deleteProject(projectId: string): Promise<ActionResult> {
     return { ok: false, message: 'Non autorisé' }
   }
 
-  // Only allow deletion if status is draft (brief not submitted)
-  if (project.status !== 'draft') {
-    return { ok: false, message: 'Seuls les projets brouillons peuvent être supprimés' }
-  }
-
   const { error } = await supabase
     .from('projects')
     .delete()

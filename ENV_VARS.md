@@ -20,6 +20,7 @@
 | Variable | Description | Où la trouver |
 |----------|-------------|---------------|
 | `SUPABASE_SERVICE_ROLE_KEY` | Clé service (admin) - **À NE JAMAIS EXPOSER** | Supabase Dashboard > Settings > API |
+| `MAKE_WEBHOOK_SECRET` | Secret partagé pour authentifier les appels Make → Next.js | Générer une chaîne aléatoire (ex: `openssl rand -hex 32`) |
 
 ## Configuration
 
@@ -35,6 +36,9 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 
 # (Optionnel) Clé service pour admin tasks
 # SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# Secret Make webhook (requis pour /api/make/*)
+# MAKE_WEBHOOK_SECRET=<générer avec: openssl rand -hex 32>
 ```
 
 ### Configuration Vercel

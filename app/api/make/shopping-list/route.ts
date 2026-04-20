@@ -11,7 +11,6 @@ export async function POST(req: Request) {
   let body: {
     project_id?: string
     title?: string
-    artistic_direction?: string
   }
   try {
     body = await req.json()
@@ -19,7 +18,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { project_id, title, artistic_direction } = body
+  const { project_id, title } = body
+  const artistic_direction = new URL(req.url).searchParams.get('notes') || undefined
   if (!project_id) {
     return NextResponse.json({ error: 'project_id manquant' }, { status: 400 })
   }

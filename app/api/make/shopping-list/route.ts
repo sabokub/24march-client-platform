@@ -8,14 +8,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  let body: { project_id?: string }
+  let body: { project_id?: string; title?: string; notes?: string }
   try {
     body = await req.json()
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { project_id } = body
+  const { project_id, title, notes } = body
   if (!project_id) {
     return NextResponse.json({ error: 'project_id manquant' }, { status: 400 })
   }
@@ -39,6 +39,8 @@ export async function POST(req: Request) {
     created_by_admin: true,
     version: newVersion,
     status: 'draft',
+    ...(title && { title }),
+    ...(notes && { notes }),
   })
 
   if (error) {
